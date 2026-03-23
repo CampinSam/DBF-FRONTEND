@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useDispatch } from 'react-redux'
 import {
   fetchFarmUserDataAsync,
@@ -13,16 +13,16 @@ import { useMasterchef, useMasterchef3, useSmartChef } from './useContract'
 
 const useUnstake = (pid: number) => {
   const dispatch = useDispatch()
-  const { account } = useWallet()
-  const masterChefContract = useMasterchef()
+  const wallet = useWallet()
+  const masterChefProgram = useMasterchef()
 
   const handleUnstake = useCallback(
     async (amount: string) => {
-      const txHash = await unstake(masterChefContract, pid, amount, account)
-      dispatch(fetchFarmUserDataAsync(account))
+      const txHash = await unstake(masterChefProgram, pid, amount, wallet)
+      dispatch(fetchFarmUserDataAsync(wallet.publicKey.toBase58()))
       console.info(txHash)
     },
-    [account, dispatch, masterChefContract, pid],
+    [wallet, dispatch, masterChefProgram, pid],
   )
 
   return { onUnstake: handleUnstake }
@@ -30,16 +30,16 @@ const useUnstake = (pid: number) => {
 
 export const useUnstake3 = (pid: number) => {
   const dispatch = useDispatch()
-  const { account } = useWallet()
-  const masterChef3Contract = useMasterchef3()
+  const wallet = useWallet()
+  const masterChef3Program = useMasterchef3()
 
   const handleUnstake = useCallback(
     async (amount: string) => {
-      const txHash = await unstake(masterChef3Contract, pid, amount, account)
-      dispatch(fetchFarm3UserDataAsync(account))
+      const txHash = await unstake(masterChef3Program, pid, amount, wallet)
+      dispatch(fetchFarm3UserDataAsync(wallet.publicKey.toBase58()))
       console.info(txHash)
     },
-    [account, dispatch, masterChef3Contract, pid],
+    [wallet, dispatch, masterChef3Program, pid],
   )
 
   return { onUnstake: handleUnstake }
@@ -47,17 +47,17 @@ export const useUnstake3 = (pid: number) => {
 
 export const useSmartUnstake = (sousId: number) => {
   const dispatch = useDispatch()
-  const { account } = useWallet()
-  const smartChefContract = useSmartChef(sousId)
+  const wallet = useWallet()
+  const smartChefProgram = useSmartChef(sousId)
 
   const handleUnstake = useCallback(
     async (amount: string) => {
-      await smartChefUnstake(smartChefContract, amount, account)
-      dispatch(updateUserStakedBalance(String(sousId), account))
-      dispatch(updateUserBalance(String(sousId), account))
-      dispatch(updateUserPendingReward(String(sousId), account))
+      await smartChefUnstake(smartChefProgram, amount, wallet)
+      dispatch(updateUserStakedBalance(String(sousId), wallet.publicKey.toBase58()))
+      dispatch(updateUserBalance(String(sousId), wallet.publicKey.toBase58()))
+      dispatch(updateUserPendingReward(String(sousId), wallet.publicKey.toBase58()))
     },
-    [account, dispatch, smartChefContract, sousId],
+    [wallet, dispatch, smartChefProgram, sousId],
   )
 
   return { onUnstake: handleUnstake }

@@ -1,100 +1,252 @@
+import { PublicKey, Transaction, SystemProgram } from '@solana/web3.js'
+import {
+  createApproveInstruction,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+  createAssociatedTokenAccountInstruction,
+  getAccount,
+} from '@solana/spl-token'
 import BigNumber from 'bignumber.js'
-import { ethers } from 'ethers'
+import { Program, BN } from '@coral-xyz/anchor'
+import { getConnection } from 'utils/solana'
 
-export const approve = async (lpContract, masterChefContract, account) => {
-  return lpContract.methods
-    .approve(masterChefContract.options.address, ethers.constants.MaxUint256)
-    .send({ from: account })
+const SOL_DECIMALS = 9
+
+const toSolAmount = (amount: string, decimals = SOL_DECIMALS): BN => {
+  return new BN(new BigNumber(amount).times(new BigNumber(10).pow(decimals)).toFixed(0))
 }
 
-export const stake = async (masterChefContract, pid, amount, account) => {
-  return masterChefContract.methods
-    .deposit(pid, new BigNumber(amount).times(new BigNumber(10).pow(18)).toString())
-    .send({ from: account })
-    .on('transactionHash', (tx) => {
-      return tx.transactionHash
-    })
+/**
+ * Approve SPL token delegation to the farming program (replaces ERC20.approve)
+ */
+export const approve = async (
+  mintAddress: PublicKey,
+  programId: PublicKey,
+  wallet: any,
+  amount: BN = new BN('18446744073709551615'), // u64::MAX
+): Promise<string> => {
+  const connection = getConnection()
+  const tokenAccount = await getAssociatedTokenAddress(mintAddress, wallet.publicKey)
+
+  const tx = new Transaction().add(
+    createApproveInstruction(tokenAccount, programId, wallet.publicKey, BigInt(amount.toString())),
+  )
+
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
 }
 
-export const smartStake = async (smartChefContract, amount, account) =>
-  smartChefContract.methods
-    .deposit(new BigNumber(amount).times(new BigNumber(10).pow(18)).toString())
-    .send({ from: account })
-    .on('transactionHash', (tx) => tx.transactionHash)
+/**
+ * Deposit / stake LP tokens into the farming program (replaces masterChef.deposit)
+ */
+export const stake = async (
+  farmProgram: Program,
+  pid: number,
+  amount: string,
+  wallet: any,
+  decimals = SOL_DECIMALS,
+): Promise<string> => {
+  const amountBN = toSolAmount(amount, decimals)
+  const tx = await farmProgram.methods
+    .deposit(pid, amountBN)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
 
-export const smartStakeBnb = async (smartChefContract, amount, account) =>
-  smartChefContract.methods
-    .deposit()
-    .send({ from: account, value: new BigNumber(amount).times(new BigNumber(10).pow(18)).toString() })
-    .on('transactionHash', (tx) => tx.transactionHash)
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
 
-export const unstake = async (masterChefContract, pid, amount, account) => {
-  return masterChefContract.methods
-    .withdraw(pid, new BigNumber(amount).times(new BigNumber(10).pow(18)).toString())
-    .send({ from: account })
-    .on('transactionHash', (tx) => {
-      return tx.transactionHash
-    })
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
 }
 
-export const smartChefUnstake = async (smartChefContract, amount, account) => {
-  // buggy CTC
-  if (smartChefContract.options.address === '0x85f27A63cFb4Dc5a36d7Eb5EF8620D343817e156') {
-    smartChefContract.methods
-      .emergencyWithdraw()
-      .send({ from: account })
-      .on('transactionHash', (tx) => tx.transactionHash)
-  } else {
-    smartChefContract.methods
-      .withdraw(new BigNumber(amount).times(new BigNumber(10).pow(18)).toString())
-      .send({ from: account })
-      .on('transactionHash', (tx) => tx.transactionHash)
-  }
+/**
+ * Stake SOL directly (replaces smartStakeBnb)
+ */
+export const stakeSOL = async (
+  farmProgram: Program,
+  amount: string,
+  wallet: any,
+): Promise<string> => {
+  const amountBN = toSolAmount(amount, SOL_DECIMALS)
+  const tx = await farmProgram.methods
+    .depositSol(amountBN)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
+
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
 }
 
-export const sousUnstake = async (sousChefContract, amount, account) => {
-  // shit code: hard fix for old CTK and BLK
-  if (sousChefContract.options.address === '0x3B9B74f48E89Ebd8b45a53444327013a2308A9BC') {
-    return sousChefContract.methods
-      .emergencyWithdraw()
-      .send({ from: account })
-      .on('transactionHash', (tx) => tx.transactionHash)
-  }
-  if (sousChefContract.options.address === '0xBb2B66a2c7C2fFFB06EA60BeaD69741b3f5BF831') {
-    return sousChefContract.methods
-      .emergencyWithdraw()
-      .send({ from: account })
-      .on('transactionHash', (tx) => tx.transactionHash)
-  }
-  return sousChefContract.methods
-    .withdraw(new BigNumber(amount).times(new BigNumber(10).pow(18)).toString())
-    .send({ from: account })
-    .on('transactionHash', (tx) => tx.transactionHash)
+/**
+ * Smart stake for a pool (replaces smartStake)
+ */
+export const smartStake = async (
+  poolProgram: Program,
+  amount: string,
+  wallet: any,
+  decimals = SOL_DECIMALS,
+): Promise<string> => {
+  const amountBN = toSolAmount(amount, decimals)
+  const tx = await poolProgram.methods
+    .deposit(amountBN)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
+
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
 }
 
-export const sousEmegencyUnstake = async (sousChefContract, amount, account) =>
-  sousChefContract.methods
+/**
+ * Smart stake SOL for a pool (replaces smartStakeBnb)
+ */
+export const smartStakeSOL = async (
+  poolProgram: Program,
+  amount: string,
+  wallet: any,
+): Promise<string> => {
+  return stakeSOL(poolProgram, amount, wallet)
+}
+
+/**
+ * Withdraw / unstake LP tokens from the farming program (replaces masterChef.withdraw)
+ */
+export const unstake = async (
+  farmProgram: Program,
+  pid: number,
+  amount: string,
+  wallet: any,
+  decimals = SOL_DECIMALS,
+): Promise<string> => {
+  const amountBN = toSolAmount(amount, decimals)
+  const tx = await farmProgram.methods
+    .withdraw(pid, amountBN)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
+
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
+}
+
+/**
+ * Unstake from a SmartChef pool (replaces smartChefUnstake / sousUnstake)
+ */
+export const smartChefUnstake = async (
+  poolProgram: Program,
+  amount: string,
+  wallet: any,
+  decimals = SOL_DECIMALS,
+): Promise<string> => {
+  const amountBN = toSolAmount(amount, decimals)
+  const tx = await poolProgram.methods
+    .withdraw(amountBN)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
+
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
+}
+
+/**
+ * Emergency withdraw from a pool (replaces emergencyWithdraw)
+ */
+export const emergencyWithdraw = async (poolProgram: Program, wallet: any): Promise<string> => {
+  const tx = await poolProgram.methods
     .emergencyWithdraw()
-    .send({ from: account })
-    .on('transactionHash', (tx) => tx.transactionHash)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
 
-export const harvest = async (masterChefContract, pid, account) => {
-  return masterChefContract.methods
-    .deposit(pid, '0')
-    .send({ from: account })
-    .on('transactionHash', (tx) => {
-      return tx.transactionHash
-    })
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
 }
 
-export const smartHarvest = async (sousChefContract, account) =>
-  sousChefContract.methods
-    .deposit('0')
-    .send({ from: account })
-    .on('transactionHash', (tx) => tx.transactionHash)
+/**
+ * Harvest / claim rewards from a farm (replaces masterChef.deposit(pid, 0))
+ */
+export const harvest = async (farmProgram: Program, pid: number, wallet: any): Promise<string> => {
+  const tx = await farmProgram.methods
+    .harvest(pid)
+    .accounts({ user: wallet.publicKey })
+    .transaction()
 
-export const smartHarvestBnb = async (sousChefContract, account) =>
-  sousChefContract.methods
-    .deposit()
-    .send({ from: account, value: new BigNumber(0) })
-    .on('transactionHash', (tx) => tx.transactionHash)
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
+}
+
+/**
+ * Harvest from a SmartChef pool (replaces smartHarvest)
+ */
+export const smartHarvest = async (poolProgram: Program, wallet: any): Promise<string> => {
+  const tx = await poolProgram.methods
+    .harvest()
+    .accounts({ user: wallet.publicKey })
+    .transaction()
+
+  const connection = getConnection()
+  const { blockhash } = await connection.getLatestBlockhash()
+  tx.recentBlockhash = blockhash
+  tx.feePayer = wallet.publicKey
+
+  const signed = await wallet.signTransaction(tx)
+  const txHash = await connection.sendRawTransaction(signed.serialize())
+  await connection.confirmTransaction(txHash, 'confirmed')
+  return txHash
+}
+
+/**
+ * Harvest SOL rewards from a pool (replaces smartHarvestBnb)
+ */
+export const smartHarvestSOL = async (poolProgram: Program, wallet: any): Promise<string> => {
+  return smartHarvest(poolProgram, wallet)
+}

@@ -1,16 +1,16 @@
-import React, { useMemo, useState, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import BigNumber from 'bignumber.js'
 import styled from 'styled-components'
-import { provider } from 'web3-core'
-import { getContract } from 'utils/erc20'
 import { Button, Flex, Text } from 'dragonball-uikit'
 import { Farm } from 'state/types'
-import { useFarmFromPid, useFarmFromSymbol, useFarmUser } from 'state/hooks'
+import { useFarmFromPid, useFarmUser } from 'state/hooks'
 import useI18n from 'hooks/useI18n'
 import UnlockButton from 'components/UnlockButton'
 import { useApprove } from 'hooks/useApprove'
 import StakeAction from './StakeAction'
 import HarvestAction from './HarvestAction'
+
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
 const Action = styled.div`
   padding-top: 16px;
@@ -21,28 +21,22 @@ export interface FarmWithStakedValue extends Farm {
 
 interface FarmCardActionsProps {
   farm: FarmWithStakedValue
-  ethereum?: provider
   account?: string
 }
 
-const CardActions: React.FC<FarmCardActionsProps> = ({ farm, ethereum, account }) => {
+const CardActions: React.FC<FarmCardActionsProps> = ({ farm, account }) => {
   const TranslateString = useI18n()
   const [requestedApproval, setRequestedApproval] = useState(false)
-  const { pid, lpAddresses, tokenAddresses, isTokenOnly, depositFeeBP , unstakingFeeBP } = useFarmFromPid(farm.pid)
+  const { pid, lpAddresses, tokenAddresses, isTokenOnly, depositFeeBP, unstakingFeeBP } = useFarmFromPid(farm.pid)
   const { allowance, tokenBalance, stakedBalance, earnings } = useFarmUser(pid)
-  const lpAddress = lpAddresses[process.env.REACT_APP_CHAIN_ID]
-  const tokenAddress = tokenAddresses[process.env.REACT_APP_CHAIN_ID];
+  const lpAddress = lpAddresses[CLUSTER]
+  const tokenAddress = tokenAddresses[CLUSTER]
   const lpName = farm.lpSymbol.toUpperCase()
   const isApproved = account && allowance && allowance.isGreaterThan(0)
 
-  const lpContract = useMemo(() => {
-    if(isTokenOnly){
-      return getContract(ethereum as provider, tokenAddress);
-    }
-    return getContract(ethereum as provider, lpAddress);
-  }, [ethereum, lpAddress, tokenAddress, isTokenOnly])
-
-  const { onApprove } = useApprove(lpContract)
+  // On Solana, we pass the mint address to useApprove
+  const mintAddress = isTokenOnly ? tokenAddress : lpAddress
+  const { onApprove } = useApprove(mintAddress)
 
   const handleApprove = useCallback(async () => {
     try {

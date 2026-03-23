@@ -4,7 +4,6 @@ import styled, { keyframes } from 'styled-components'
 import { Flex, Text, Skeleton } from 'dragonball-uikit'
 import { communityFarms } from 'config/constants'
 import { Farm } from 'state/types'
-import { provider } from 'web3-core'
 import useI18n from 'hooks/useI18n'
 import ExpandableSectionButton from 'components/ExpandableSectionButton'
 import { QuoteToken } from 'config/constants/types'
@@ -108,7 +107,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPric
     if (!farm.lpTotalInQuoteToken) {
       return null
     }
-    if (farm.quoteTokenSymbol === QuoteToken.BNB) {
+    if (farm.quoteTokenSymbol === QuoteToken.SOL) {
       return bnbPrice.times(farm.lpTotalInQuoteToken)
     }
     if (farm.quoteTokenSymbol === QuoteToken.CAKE) {
@@ -209,9 +208,9 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPric
           isTokenOnly={farm.isTokenOnly}
           bscScanAddress={
             farm.isTokenOnly ?
-              `https://bscscan.com/token/${farm.tokenAddresses[process.env.REACT_APP_CHAIN_ID]}`
+              `https://solscan.io/token/${farm.tokenAddresses[process.env.REACT_APP_SOLANA_CLUSTER || 'devnet']}`
               :
-              `https://bscscan.com/token/${farm.lpAddresses[process.env.REACT_APP_CHAIN_ID]}`
+              `https://solscan.io/token/${farm.lpAddresses[process.env.REACT_APP_SOLANA_CLUSTER || 'devnet']}`
           }
           totalValueFormated={totalValueFormated}
           lpLabel={lpLabel}

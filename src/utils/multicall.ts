@@ -1,25 +1,30 @@
-import { AbiItem } from 'web3-utils'
-import { Interface } from '@ethersproject/abi'
-import { getWeb3 } from 'utils/web3'
-import MultiCallAbi from 'config/abi/Multicall.json'
-import { getMulticallAddress } from 'utils/addressHelpers'
+import { PublicKey, AccountInfo } from '@solana/web3.js'
+import { getConnection } from 'utils/solana'
 
-interface Call {
-  address: string // Address of the contract
-  name: string // Function name on the contract (exemple: balanceOf)
-  params?: any[] // Function params
+export interface SolanaCall {
+  pubkey: string | PublicKey
 }
 
-const multicall = async (abi: any[], calls: Call[]) => {
-  const web3 = getWeb3()
-  const multi = new web3.eth.Contract((MultiCallAbi as unknown) as AbiItem, getMulticallAddress())
-  const itf = new Interface(abi)
-
-  const calldata = calls.map((call) => [call.address.toLowerCase(), itf.encodeFunctionData(call.name, call.params)])
-  const { returnData } = await multi.methods.aggregate(calldata).call()
-  const res = returnData.map((call, i) => itf.decodeFunctionResult(calls[i].name, call))
-
-  return res
+/**
+ * Fetches multiple Solana accounts in a single RPC call (replaces EVM multicall)
+ */
+export const getMultipleAccounts = async (
+  pubkeys: Array<string | PublicKey>,
+): Promise<Array<AccountInfo<Buffer> | null>> => {
+  const connection = getConnection()
+  const publicKeys = pubkeys.map((pk) => (typeof pk === 'string' ? new PublicKey(pk) : pk))
+  const result = await connection.getMultipleAccountsInfo(publicKeys)
+  return result
 }
 
-export default multicall
+/**
+ * Fetches multiple parsed token accounts in a single RPC call
+ */
+export const getMultipleParsedAccounts = async (pubkeys: Array<string | PublicKey>) => {
+  const connection = getConnection()
+  const publicKeys = pubkeys.map((pk) => (typeof pk === 'string' ? new PublicKey(pk) : pk))
+  const result = await connection.getMultipleParsedAccounts(publicKeys)
+  return result.value
+}
+
+export default getMultipleAccounts

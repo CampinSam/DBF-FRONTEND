@@ -1,10 +1,12 @@
 import React, { useState } from 'react'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { useConnection } from '@solana/wallet-adapter-react'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import BigNumber from 'bignumber.js'
 import { Modal, Button, Flex, LinkExternal } from 'dragonball-uikit'
 import BalanceInput from 'components/Input/BalanceInput'
 import { getFullDisplayBalance } from 'utils/formatBalance'
-import useWeb3 from 'hooks/useWeb3'
+import { useSOLBalance } from 'hooks/useTokenBalance'
 
 interface Props {
   currency: string
@@ -16,16 +18,17 @@ interface Props {
 const ContributeModal: React.FC<Props> = ({ currency, contract, onDismiss }) => {
   const [value, setValue] = useState('')
   const [pendingTx, setPendingTx] = useState(false)
-  const { account, balance } = useWallet()
-  const web3 = useWeb3()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
+  const solBalance = useSOLBalance()
   return (
     <Modal title={`Contribute ${currency}`} onDismiss={onDismiss}>
       <BalanceInput
         value={value}
         onChange={(e) => setValue(e.currentTarget.value)}
         symbol={currency}
-        max={getFullDisplayBalance(new BigNumber(balance))}
-        onSelectMax={() => setValue(new BigNumber(balance).toString())}
+        max={getFullDisplayBalance(solBalance.times(LAMPORTS_PER_SOL))}
+        onSelectMax={() => setValue(solBalance.toString())}
       />
       <Flex justifyContent="space-between" mb="24px">
         <Button fullWidth variant="secondary" onClick={onDismiss} mr="8px">

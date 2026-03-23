@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import BigNumber from 'bignumber.js'
 import { Card, CardBody, CardRibbon, Flex, Text } from 'dragonball-uikit'
 import { Ifo, IfoStatus } from 'config/constants/types'
@@ -18,7 +18,7 @@ import IfoCardContribute from './IfoCardContribute'
 import IfoCardProgress from './IfoCardProgress'
 import IfoCardTime from './IfoCardTime'
 
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
 export interface IfoCardProps {
   ifo: Ifo
@@ -120,8 +120,9 @@ const IfoCard: React.FC<IfoCardProps> = ({ ifo }) => {
     softCapReached: false,
     finalized: false,
   })
-  const { account } = useWallet()
-  const presaleContract = useIdoContract(ifo.address[CHAIN_ID])
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
+  const presaleContract = useIdoContract(ifo.address[CLUSTER])
 
   const currentBlock = useBlock()
   const TranslateString = useI18n()
@@ -250,7 +251,7 @@ const IfoCard: React.FC<IfoCardProps> = ({ ifo }) => {
           {!account && <UnlockButton fullWidth />}
           {(isActive || isFinished) && account && (
             <IfoCardContribute
-              address={ifo.address[CHAIN_ID]}
+              address={ifo.address[CLUSTER]}
               currency="BNB"
               currencyAddress={currencyAddress}
               contract={presaleContract}

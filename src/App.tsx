@@ -1,7 +1,7 @@
 import React, { useEffect, Suspense, lazy } from 'react'
 import styled from 'styled-components'
 import { BrowserRouter as Router, Redirect, Route, Switch } from 'react-router-dom'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { ResetCSS } from 'dragonball-uikit'
 import BigNumber from 'bignumber.js'
 import { useFetchPublicData } from 'state/hooks'
@@ -37,12 +37,14 @@ BigNumber.config({
 
 
 const App: React.FC = () => {
-  const { account, connect } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
+  // Auto-connect is handled by WalletProvider autoConnect prop in Providers.tsx
   useEffect(() => {
-    if (!account && window.localStorage.getItem('accountStatus')) {
-      connect('injected')
+    if (account) {
+      window.localStorage.setItem('accountStatus', '1')
     }
-  }, [account, connect])
+  }, [account])
 
   useFetchPublicData()
 

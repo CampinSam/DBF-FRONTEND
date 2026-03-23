@@ -1,6 +1,7 @@
 import React, { useContext } from 'react'
 import { Menu as UikitMenu } from 'dragonball-uikit'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet, useWalletModal } from '@solana/wallet-adapter-react-ui'
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react'
 import { allLanguages } from 'config/localisation/languageCodes'
 import { LanguageContext } from 'contexts/Localisation/languageContext'
 import useTheme from 'hooks/useTheme'
@@ -8,7 +9,9 @@ import { usePriceCakeBusd, usePriceCake2Busd } from 'state/hooks'
 import config from './config'
 
 const Menu = (props) => {
-  const { account, connect, reset } = useWallet()
+  const { publicKey, disconnect } = useSolanaWallet()
+  const account = publicKey?.toBase58()
+  const { setVisible } = useWalletModal()
   const { selectedLanguage, setSelectedLanguage } = useContext(LanguageContext)
   const { isDark, toggleTheme } = useTheme()
   const cakePriceUsd = usePriceCakeBusd()
@@ -17,8 +20,8 @@ const Menu = (props) => {
   return (
     <UikitMenu
       account={account}
-      login={connect}
-      logout={reset}
+      login={() => setVisible(true)}
+      logout={disconnect}
       isDark={isDark}
       toggleTheme={toggleTheme}
       currentLang={selectedLanguage && selectedLanguage.code}
@@ -27,8 +30,8 @@ const Menu = (props) => {
       cakePriceUsd={cakePriceUsd.toNumber()}
       cakePrice2Usd={cakePrice2Usd.toNumber()}
       links={config}
-      priceLink="https://bscscan.com/token/0xceB2f5e9C7F2D3BCd12A7560D73c56f3396af3F9"
-      priceLink2="https://bscscan.com/token/0xcBA1813Ede683333020cedea7C3b63FbaC28e78e"
+      priceLink="https://solscan.io/token/DBaLLTokenMintAddressMainnet11111111111111111"
+      priceLink2="https://solscan.io/token/SENZUTokenMintAddressMainnet1111111111111111"
       {...props}
     />
   )

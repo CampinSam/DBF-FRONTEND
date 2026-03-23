@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useModal, Text } from 'dragonball-uikit'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import BigNumber from 'bignumber.js'
-import { Contract } from 'web3-eth-contract'
 import { IfoStatus } from 'config/constants/types'
 import { getBalanceNumber } from 'utils/formatBalance'
 import LabelButton from './LabelButton'
@@ -34,7 +33,8 @@ const IfoCardContribute: React.FC<Props> = ({
   const [refundedTokens, setRefundedTokens] = useState(new BigNumber(0))
   const [tokensPerBnb, setTokensPerBnb] = useState(new BigNumber(0))
 
-  const { account } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const [onPresentContributeModal] = useModal(
     <ContributeModal currency={currency} contract={contract} currencyAddress={currencyAddress} />,
   )

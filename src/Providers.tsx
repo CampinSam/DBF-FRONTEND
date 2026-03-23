@@ -1,7 +1,9 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { ModalProvider } from 'dragonball-uikit'
-// import bsc, { UseWalletProvider } from '@binance-chain/bsc-use-wallet'
-import * as bsc from '@binance-chain/bsc-use-wallet'
+import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react'
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui'
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom'
+import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare'
 import { Provider } from 'react-redux'
 import getRpcUrl from 'utils/getRpcUrl'
 import { LanguageContextProvider } from 'contexts/Localisation/languageContext'
@@ -10,26 +12,32 @@ import { BlockContextProvider } from 'contexts/BlockContext'
 import { RefreshContextProvider } from 'contexts/RefreshContext'
 import store from 'state'
 
+// Import Solana wallet adapter default styles
+import '@solana/wallet-adapter-react-ui/styles.css'
+
 const Providers: React.FC = ({ children }) => {
   const rpcUrl = getRpcUrl()
-  const chainId = parseInt(process.env.REACT_APP_CHAIN_ID);
+
+  const wallets = useMemo(
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter()],
+    [],
+  )
+
   return (
     <Provider store={store}>
       <ThemeContextProvider>
         <LanguageContextProvider>
-          <bsc.UseWalletProvider
-            chainId={chainId}
-            connectors={{
-              walletconnect: { rpcUrl },
-              bsc,
-            }}
-          >
-            <BlockContextProvider>
-              <RefreshContextProvider>
-                <ModalProvider>{children}</ModalProvider>
-              </RefreshContextProvider>
-            </BlockContextProvider>
-          </bsc.UseWalletProvider>
+          <ConnectionProvider endpoint={rpcUrl}>
+            <WalletProvider wallets={wallets} autoConnect>
+              <WalletModalProvider>
+                <BlockContextProvider>
+                  <RefreshContextProvider>
+                    <ModalProvider>{children}</ModalProvider>
+                  </RefreshContextProvider>
+                </BlockContextProvider>
+              </WalletModalProvider>
+            </WalletProvider>
+          </ConnectionProvider>
         </LanguageContextProvider>
       </ThemeContextProvider>
     </Provider>

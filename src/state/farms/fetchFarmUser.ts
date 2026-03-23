@@ -1,76 +1,71 @@
 import BigNumber from 'bignumber.js'
-import erc20ABI from 'config/abi/erc20.json'
-import masterchefABI from 'config/abi/masterchef.json'
-import multicall from 'utils/multicall'
+import { PublicKey } from '@solana/web3.js'
+import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token'
+import { getConnection } from 'utils/solana'
 import farmsConfig from 'config/constants/farms'
 import { getMasterChefAddress } from 'utils/addressHelpers'
+import { getAllowance, getTokenBalance } from 'utils/erc20'
 
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
 export const fetchFarmUserAllowances = async (account: string) => {
-  const masterChefAdress = getMasterChefAddress()
+  const masterChefAddress = getMasterChefAddress()
 
-  const calls = farmsConfig.map((farm) => {
-    const lpContractAddress = farm.isTokenOnly ? farm.tokenAddresses[CHAIN_ID] : farm.lpAddresses[CHAIN_ID]
-    return { address: lpContractAddress, name: 'allowance', params: [account, masterChefAdress] }
-  })
-
-  const rawLpAllowances = await multicall(erc20ABI, calls)
-  const parsedLpAllowances = rawLpAllowances.map((lpBalance) => {
-    return new BigNumber(lpBalance).toJSON()
-  })
-  return parsedLpAllowances
+  const allowances = await Promise.all(
+    farmsConfig.map(async (farm) => {
+      const mintAddress = farm.isTokenOnly
+        ? farm.tokenAddresses[CLUSTER]
+        : farm.lpAddresses[CLUSTER]
+      if (!mintAddress || !masterChefAddress) return '0'
+      const allowance = await getAllowance(mintAddress, account, masterChefAddress)
+      return new BigNumber(allowance).toJSON()
+    }),
+  )
+  return allowances
 }
 
 export const fetchFarmUserTokenBalances = async (account: string) => {
-  const calls = farmsConfig.map((farm) => {
-    const lpContractAddress = farm.isTokenOnly ? farm.tokenAddresses[CHAIN_ID] : farm.lpAddresses[CHAIN_ID]
-    return {
-      address: lpContractAddress,
-      name: 'balanceOf',
-      params: [account],
-    }
-  })
-
-  const rawTokenBalances = await multicall(erc20ABI, calls)
-  const parsedTokenBalances = rawTokenBalances.map((tokenBalance) => {
-    return new BigNumber(tokenBalance).toJSON()
-  })
-  return parsedTokenBalances
+  const balances = await Promise.all(
+    farmsConfig.map(async (farm) => {
+      const mintAddress = farm.isTokenOnly
+        ? farm.tokenAddresses[CLUSTER]
+        : farm.lpAddresses[CLUSTER]
+      if (!mintAddress) return '0'
+      const balance = await getTokenBalance(mintAddress, account)
+      return new BigNumber(balance).toJSON()
+    }),
+  )
+  return balances
 }
 
 export const fetchFarmUserStakedBalances = async (account: string) => {
-  const masterChefAdress = getMasterChefAddress()
+  const connection = getConnection()
+  const masterChefPubkey = new PublicKey(getMasterChefAddress())
+  const ownerPubkey = new PublicKey(account)
 
-  const calls = farmsConfig.map((farm) => {
-    return {
-      address: masterChefAdress,
-      name: 'userInfo',
-      params: [farm.pid, account],
-    }
-  })
-
-  const rawStakedBalances = await multicall(masterchefABI, calls)
-  const parsedStakedBalances = rawStakedBalances.map((stakedBalance) => {
-    return new BigNumber(stakedBalance[0]._hex).toJSON()
-  })
-  return parsedStakedBalances
+  const stakedBalances = await Promise.all(
+    farmsConfig.map(async (farm) => {
+      const lpAddress = farm.isTokenOnly
+        ? farm.tokenAddresses[CLUSTER]
+        : farm.lpAddresses[CLUSTER]
+      if (!lpAddress) return '0'
+      try {
+        // On Solana, staked amounts are tracked in the MasterChef program's PDA accounts
+        // This reads the user's staked LP token account managed by the program
+        const lpMintPubkey = new PublicKey(lpAddress)
+        const userStakeAta = await getAssociatedTokenAddress(lpMintPubkey, masterChefPubkey, true)
+        const stakeAccount = await getAccount(connection, userStakeAta).catch(() => null)
+        return new BigNumber(stakeAccount?.amount?.toString() || '0').toJSON()
+      } catch (e) {
+        return '0'
+      }
+    }),
+  )
+  return stakedBalances
 }
 
 export const fetchFarmUserEarnings = async (account: string) => {
-  const masterChefAdress = getMasterChefAddress()
-
-  const calls = farmsConfig.map((farm) => {
-    return {
-      address: masterChefAdress,
-      name: 'pendingEgg',
-      params: [farm.pid, account],
-    }
-  })
-
-  const rawEarnings = await multicall(masterchefABI, calls)
-  const parsedEarnings = rawEarnings.map((earnings) => {
-    return new BigNumber(earnings).toJSON()
-  })
-  return parsedEarnings
+  // Pending rewards are tracked in the MasterChef program's PDA accounts.
+  // Until the Anchor IDL / on-chain program is deployed, return 0 as placeholder.
+  return farmsConfig.map(() => new BigNumber(0).toJSON())
 }

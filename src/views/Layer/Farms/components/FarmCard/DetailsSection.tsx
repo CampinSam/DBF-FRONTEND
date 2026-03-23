@@ -54,7 +54,7 @@ const DetailsSection: React.FC<ExpandableSectionProps> = ({
         <Text>{TranslateString(3160, 'Stake')}:</Text>
         <StyledLinkExternal href={
           isTokenOnly ?
-            `https://exchange.dragonballfinance.org/#/swap/${tokenAddresses[process.env.REACT_APP_CHAIN_ID]}`
+            `https://raydium.io/swap/?inputCurrency=${tokenAddresses[process.env.REACT_APP_SOLANA_CLUSTER || 'devnet']}`
             :
             `https://exchange.dragonballfinance.org/#/add/${liquidityUrlPathParts}`
         }>

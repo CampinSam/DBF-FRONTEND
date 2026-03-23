@@ -1,28 +1,25 @@
 import addresses from 'config/constants/contracts'
 
-const chainId = process.env.REACT_APP_CHAIN_ID
+const cluster = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
 export const getCakeAddress = () => {
-  return addresses.cake[chainId]
+  return addresses.cake[cluster]
 }
 export const getCake3Address = () => {
-  return addresses.cake3[chainId]
+  return addresses.cake3[cluster]
 }
 export const getMasterChefAddress = () => {
-  return addresses.masterChef[chainId]
+  return addresses.masterChef[cluster]
 }
 export const getMasterChef3Address = () => {
-  return addresses.masterChef3[chainId]
+  return addresses.masterChef3[cluster]
 }
-export const getMulticallAddress = () => {
-  return addresses.mulltiCall[chainId]
-}
-export const getWbnbAddress = () => {
-  return addresses.wbnb[chainId]
+export const getWsolAddress = () => {
+  return addresses.wsol[cluster]
 }
 export const getLotteryAddress = () => {
-  return addresses.lottery[chainId]
+  return addresses.lottery[cluster]
 }
 export const getLotteryTicketAddress = () => {
-  return addresses.lotteryNFT[chainId]
+  return addresses.lotteryNFT[cluster]
 }

@@ -2,8 +2,7 @@ import React, { useEffect, useCallback, useState, useMemo } from 'react'
 import { Route, useRouteMatch } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import BigNumber from 'bignumber.js'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
-import { provider } from 'web3-core'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { Image, Heading } from 'dragonball-uikit'
 import { BLOCKS_PER_YEAR, CAKE_PER_BLOCK, CAKE_POOL_PID } from 'config'
 import FlexLayout from 'components/layout/Flex'
@@ -31,7 +30,8 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
   const cake2Price = usePriceCake2Busd()
   const ethPrice = usePriceEthBusd()
   const btcbPrice2 = usePriceBTCBBusd()
-  const { account, ethereum }: { account: string; ethereum: provider } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const {tokenMode} = farmsProps;
 
   const dispatch = useDispatch()
@@ -70,7 +70,7 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
      
         
 
-        if (farm.quoteTokenSymbol === QuoteToken.BNB) {
+        if (farm.quoteTokenSymbol === QuoteToken.SOL) {
           totalValue = totalValue.times(bnbPrice);
         }
         if (farm.quoteTokenSymbol === QuoteToken.SENZU) {

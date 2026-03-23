@@ -1,60 +1,46 @@
 import { useEffect, useState } from 'react'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
-import multicall from 'utils/multicall'
-import { getMasterChefAddress, getMasterChef3Address } from 'utils/addressHelpers'
-import masterChefABI from 'config/abi/masterchef.json'
-import masterChef3ABI from 'config/abi/masterchef3.json'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { farmsConfig, farms3Config } from 'config/constants'
+import { fetchFarmUserEarnings } from 'state/farms/fetchFarmUser'
+import { fetchFarm3UserEarnings } from 'state/farms3/fetchFarmUser3'
 import useRefresh from './useRefresh'
 
 const useAllEarnings = () => {
   const [balances, setBalance] = useState([])
-  const { account }: { account: string } = useWallet()
+  const { publicKey } = useWallet()
   const { fastRefresh } = useRefresh()
 
   useEffect(() => {
     const fetchAllBalances = async () => {
-      const calls = farmsConfig.map((farm) => ({
-        address: getMasterChefAddress(),
-        name: 'pendingEgg',
-        params: [farm.pid, account],
-      }))
-
-      const res = await multicall(masterChefABI, calls)
-
-      setBalance(res)
+      if (!publicKey) return
+      const earnings = await fetchFarmUserEarnings(publicKey.toBase58())
+      setBalance(earnings)
     }
 
-    if (account) {
+    if (publicKey) {
       fetchAllBalances()
     }
-  }, [account, fastRefresh])
+  }, [publicKey, fastRefresh])
 
   return balances
 }
 
 export const useAllEarnings3 = () => {
   const [balances, setBalance] = useState([])
-  const { account }: { account: string } = useWallet()
+  const { publicKey } = useWallet()
   const { fastRefresh } = useRefresh()
 
   useEffect(() => {
     const fetchAllBalances = async () => {
-      const calls = farms3Config.map((farm) => ({
-        address: getMasterChef3Address(),
-        name: 'pendingEgg',
-        params: [farm.pid, account],
-      }))
-
-      const res = await multicall(masterChef3ABI, calls)
-
-      setBalance(res)
+      if (!publicKey) return
+      const earnings = await fetchFarm3UserEarnings(publicKey.toBase58())
+      setBalance(earnings)
     }
 
-    if (account) {
+    if (publicKey) {
       fetchAllBalances()
     }
-  }, [account, fastRefresh])
+  }, [publicKey, fastRefresh])
 
   return balances
 }

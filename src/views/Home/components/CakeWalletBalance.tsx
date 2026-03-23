@@ -1,6 +1,6 @@
 import React from 'react'
 import { Text } from 'dragonball-uikit'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import useTokenBalance from 'hooks/useTokenBalance'
 import useI18n from 'hooks/useI18n'
 import { getCakeAddress } from 'utils/addressHelpers'
@@ -9,7 +9,8 @@ import CardValue from './CardValue'
 
 const CakeWalletBalance = ({cakeBalance}) => {
   const TranslateString = useI18n()
-  const { account } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
 
   if (!account) {
     return (
