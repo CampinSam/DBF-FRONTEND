@@ -1,22 +1,30 @@
 import { useCallback } from 'react'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useDispatch } from 'react-redux'
 import { fetchFarmUserDataAsync, fetchFarm3UserDataAsync, updateUserStakedBalance, updateUserBalance } from 'state/actions'
-import { stake, smartStakeBnb, smartStake } from 'utils/callHelpers'
+import { stake, stakeSOL, smartStake, smartStakeSOL } from 'utils/callHelpers'
 import { useMasterchef, useMasterchef3, useSmartChef } from './useContract'
 
 const useStake = (pid: number) => {
   const dispatch = useDispatch()
-  const { account } = useWallet()
-  const masterChefContract = useMasterchef()
+  const wallet = useWallet()
+  const masterChefProgram = useMasterchef()
 
   const handleStake = useCallback(
     async (amount: string) => {
-      const txHash = await stake(masterChefContract, pid, amount, account)
-      dispatch(fetchFarmUserDataAsync(account))
-      console.info(txHash)
+      try {
+        const txHash = await stake(masterChefProgram, pid, amount, wallet)
+        dispatch(fetchFarmUserDataAsync(wallet.publicKey.toBase58()))
+        console.info(txHash)
+      } catch (e) {
+        if (e instanceof Error && e.message.toLowerCase().includes('user rejected')) {
+          console.warn('Stake transaction rejected by user')
+        } else {
+          console.error('Stake transaction failed:', e)
+        }
+      }
     },
-    [account, dispatch, masterChefContract, pid],
+    [wallet, dispatch, masterChefProgram, pid],
   )
 
   return { onStake: handleStake }
@@ -24,34 +32,50 @@ const useStake = (pid: number) => {
 
 export const useStake3 = (pid: number) => {
   const dispatch = useDispatch()
-  const { account } = useWallet()
-  const masterChef3Contract = useMasterchef3()
+  const wallet = useWallet()
+  const masterChef3Program = useMasterchef3()
 
   const handleStake = useCallback(
     async (amount: string) => {
-      const txHash = await stake(masterChef3Contract, pid, amount, account)
-      dispatch(fetchFarm3UserDataAsync(account))
-      console.info(txHash)
+      try {
+        const txHash = await stake(masterChef3Program, pid, amount, wallet)
+        dispatch(fetchFarm3UserDataAsync(wallet.publicKey.toBase58()))
+        console.info(txHash)
+      } catch (e) {
+        if (e instanceof Error && e.message.toLowerCase().includes('user rejected')) {
+          console.warn('Stake3 transaction rejected by user')
+        } else {
+          console.error('Stake3 transaction failed:', e)
+        }
+      }
     },
-    [account, dispatch, masterChef3Contract, pid],
+    [wallet, dispatch, masterChef3Program, pid],
   )
 
   return { onStake: handleStake }
 }
 
-export const useSmartStake = (sousId: number, isUsingBnb = false) => {
+export const useSmartStake = (sousId: number, isUsingSOL = false) => {
   const dispatch = useDispatch()
-  const { account } = useWallet()
-  const smartChefContract = useSmartChef(sousId)
+  const wallet = useWallet()
+  const smartChefProgram = useSmartChef(sousId)
 
   const handleStake = useCallback(
     async (amount: string) => {
-      const stakeFn = isUsingBnb ? smartStakeBnb : smartStake
-      await stakeFn(smartChefContract, amount, account)
-      dispatch(updateUserStakedBalance(String(sousId), account))
-      dispatch(updateUserBalance(String(sousId), account))
+      try {
+        const stakeFn = isUsingSOL ? smartStakeSOL : smartStake
+        await stakeFn(smartChefProgram, amount, wallet)
+        dispatch(updateUserStakedBalance(String(sousId), wallet.publicKey.toBase58()))
+        dispatch(updateUserBalance(String(sousId), wallet.publicKey.toBase58()))
+      } catch (e) {
+        if (e instanceof Error && e.message.toLowerCase().includes('user rejected')) {
+          console.warn('SmartStake transaction rejected by user')
+        } else {
+          console.error('SmartStake transaction failed:', e)
+        }
+      }
     },
-    [account, dispatch, isUsingBnb, smartChefContract, sousId],
+    [wallet, dispatch, isUsingSOL, smartChefProgram, sousId],
   )
 
   return { onStake: handleStake }

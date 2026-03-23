@@ -1,29 +1,28 @@
 import { useEffect, useState } from 'react'
 import BigNumber from 'bignumber.js'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
-import { provider } from 'web3-core'
-import cakeABI from 'config/abi/cake.json'
-import cake3ABI from 'config/abi/cake3.json'
-import { getContract } from 'utils/web3'
-import { getTokenBalance } from 'utils/erc20'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { getTokenBalance, getTokenTotalSupply } from 'utils/erc20'
 import { getCakeAddress, getCake3Address } from 'utils/addressHelpers'
+import { getConnection } from 'utils/solana'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
 import useRefresh from './useRefresh'
 
-const useTokenBalance = (tokenAddress: string) => {
+const useTokenBalance = (mintAddress: string) => {
   const [balance, setBalance] = useState(new BigNumber(0))
-  const { account, ethereum }: { account: string; ethereum: provider } = useWallet()
+  const { publicKey } = useWallet()
   const { fastRefresh } = useRefresh()
 
   useEffect(() => {
     const fetchBalance = async () => {
-      const res = await getTokenBalance(ethereum, tokenAddress, account)
+      if (!publicKey) return
+      const res = await getTokenBalance(mintAddress, publicKey.toBase58())
       setBalance(new BigNumber(res))
     }
 
-    if (account && ethereum) {
+    if (publicKey) {
       fetchBalance()
     }
-  }, [account, ethereum, tokenAddress, fastRefresh])
+  }, [publicKey, mintAddress, fastRefresh])
 
   return balance
 }
@@ -34,8 +33,7 @@ export const useTotalSupply = () => {
 
   useEffect(() => {
     async function fetchTotalSupply() {
-      const cakeContract = getContract(cakeABI, getCakeAddress())
-      const supply = await cakeContract.methods.totalSupply().call()
+      const supply = await getTokenTotalSupply(getCakeAddress())
       setTotalSupply(new BigNumber(supply))
     }
 
@@ -45,20 +43,10 @@ export const useTotalSupply = () => {
   return totalSupply
 }
 
-export const useBurnedBalance = (tokenAddress: string) => {
-  const [balance, setBalance] = useState(new BigNumber(0))
-  const { slowRefresh } = useRefresh()
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      const cakeContract = getContract(cakeABI, getCakeAddress())
-      const bal = await cakeContract.methods.balanceOf('0x000000000000000000000000000000000000dEaD').call()
-      setBalance(new BigNumber(bal))
-    }
-
-    fetchBalance()
-  }, [tokenAddress, slowRefresh])
-
+export const useBurnedBalance = (_mintAddress: string) => {
+  // On Solana, tokens are burned by sending to a burn address or using the burn instruction.
+  // This returns 0 as a placeholder until the Solana burn address / tracking is configured.
+  const [balance] = useState(new BigNumber(0))
   return balance
 }
 
@@ -68,8 +56,7 @@ export const useTotalSupply3 = () => {
 
   useEffect(() => {
     async function fetchTotalSupply() {
-      const cakeContract = getContract(cake3ABI, getCake3Address())
-      const supply = await cakeContract.methods.totalSupply().call()
+      const supply = await getTokenTotalSupply(getCake3Address())
       setTotalSupply(new BigNumber(supply))
     }
 
@@ -79,19 +66,29 @@ export const useTotalSupply3 = () => {
   return totalSupply
 }
 
-export const useBurnedBalance3 = (tokenAddress: string) => {
+export const useBurnedBalance3 = (_mintAddress: string) => {
+  // Placeholder - see useBurnedBalance
+  const [balance] = useState(new BigNumber(0))
+  return balance
+}
+
+export const useSOLBalance = () => {
   const [balance, setBalance] = useState(new BigNumber(0))
-  const { slowRefresh } = useRefresh()
+  const { publicKey } = useWallet()
+  const { fastRefresh } = useRefresh()
 
   useEffect(() => {
     const fetchBalance = async () => {
-      const cakeContract = getContract(cake3ABI, getCake3Address())
-      const bal = await cakeContract.methods.balanceOf('0x000000000000000000000000000000000000dEaD').call()
-      setBalance(new BigNumber(bal))
+      if (!publicKey) return
+      const connection = getConnection()
+      const lamports = await connection.getBalance(publicKey)
+      setBalance(new BigNumber(lamports).div(LAMPORTS_PER_SOL))
     }
 
-    fetchBalance()
-  }, [tokenAddress, slowRefresh])
+    if (publicKey) {
+      fetchBalance()
+    }
+  }, [publicKey, fastRefresh])
 
   return balance
 }

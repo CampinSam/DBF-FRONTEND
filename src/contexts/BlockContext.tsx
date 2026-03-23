@@ -1,26 +1,26 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { getWeb3 } from 'utils/web3'
+import { getConnection } from 'utils/solana'
 
 const BlockContext = React.createContext(0)
 
 const BlockContextProvider = ({ children }) => {
-  const previousBlock = useRef(0)
-  const [block, setBlock] = useState(0)
+  const previousSlot = useRef(0)
+  const [slot, setSlot] = useState(0)
 
   useEffect(() => {
-    const web3 = getWeb3()
+    const connection = getConnection()
     const interval = setInterval(async () => {
-      const blockNumber = await web3.eth.getBlockNumber()
-      if (blockNumber !== previousBlock.current) {
-        previousBlock.current = blockNumber
-        setBlock(blockNumber)
+      const currentSlot = await connection.getSlot()
+      if (currentSlot !== previousSlot.current) {
+        previousSlot.current = currentSlot
+        setSlot(currentSlot)
       }
     }, 6000)
 
     return () => clearInterval(interval)
   }, [])
 
-  return <BlockContext.Provider value={block}>{children}</BlockContext.Provider>
+  return <BlockContext.Provider value={slot}>{children}</BlockContext.Provider>
 }
 
 export { BlockContext, BlockContextProvider }

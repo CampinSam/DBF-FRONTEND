@@ -2,10 +2,9 @@ import BigNumber from 'bignumber.js'
 import React, { useCallback, useState } from 'react'
 import styled from 'styled-components'
 import { Button, IconButton, useModal, AddIcon, Image } from 'dragonball-uikit'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import UnlockButton from 'components/UnlockButton'
 import Label from 'components/Label'
-import { useERC20 } from 'hooks/useContract'
 import { useSousApprove } from 'hooks/useApprove'
 import useI18n from 'hooks/useI18n'
 import { useSmartStake } from 'hooks/useStake'
@@ -24,7 +23,7 @@ import OldSyrupTitle from './OldSyrupTitle'
 import HarvestButton from './HarvestButton'
 import CardFooter from './CardFooter'
 
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
 interface PoolWithApy extends Pool {
   apy: BigNumber
@@ -57,15 +56,16 @@ const PoolCard: React.FC<HarvestProps> = ({ pool }) => {
 
   console.log("burnFee",burnFee)
   // Pools using native BNB behave differently than pools using a token
-  const isBnbPool = poolCategory === PoolCategory.BINANCE
+  const isSolPool = poolCategory === PoolCategory.SOLANA
   const TranslateString = useI18n()
-  const stakingTokenContract = useERC20(stakingTokenAddress[CHAIN_ID])
-  const { account } = useWallet()
+  const stakingMintAddress = stakingTokenAddress?.[CLUSTER]
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const block = useBlock()
-  const { onApprove } = useSousApprove(stakingTokenContract, sousId)
-  const { onStake } = useSmartStake(sousId, isBnbPool)
+  const { onApprove } = useSousApprove(stakingMintAddress, sousId)
+  const { onStake } = useSmartStake(sousId, isSolPool)
   const { onUnstake } = useSmartUnstake(sousId)
-  const { onReward } = useSmartChefHarvest(sousId, isBnbPool)
+  const { onReward } = useSmartChefHarvest(sousId, isSolPool)
 
   const [requestedApproval, setRequestedApproval] = useState(false)
   const [pendingTx, setPendingTx] = useState(false)
@@ -79,7 +79,7 @@ const PoolCard: React.FC<HarvestProps> = ({ pool }) => {
   const blocksRemaining = Math.max(endBlock - block, 0)
   const isOldSyrup = stakingTokenName === QuoteToken.SYRUP
   const accountHasStakedBalance = stakedBalance?.toNumber() > 0
-  const needsApproval = !accountHasStakedBalance && !allowance.toNumber() && !isBnbPool
+  const needsApproval = !accountHasStakedBalance && !allowance.toNumber() && !isSolPool
   const isCardActive = isFinished && accountHasStakedBalance
 
   const convertedLimit = new BigNumber(stakingLimit).multipliedBy(new BigNumber(10).pow(tokenDecimals))

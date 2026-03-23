@@ -1,6 +1,6 @@
 import random from 'lodash/random'
 
-// Array of available nodes to connect to
+// Array of available Solana RPC nodes to connect to
 const nodes = [process.env.REACT_APP_NODE_1, process.env.REACT_APP_NODE_2, process.env.REACT_APP_NODE_3]
 
 const getNodeUrl = () => {

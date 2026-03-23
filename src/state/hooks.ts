@@ -1,17 +1,11 @@
 import BigNumber from 'bignumber.js'
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { useWallet } from '@solana/wallet-adapter-react'
 import useRefresh from 'hooks/useRefresh'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
-// import poolsConfig from 'config/constants/pools'
-import erc20 from 'config/abi/erc20.json'
-import multicall from 'utils/multicall'
-// import CoinGecko from 'coingecko-api'
 import { fetchFarmsPublicDataAsync, fetchPoolsPublicDataAsync, fetchPoolsUserDataAsync, fetchFarms3PublicDataAsync } from './actions'
 import { State, Farm, Pool, Farm3 } from './types'
 import { QuoteToken } from '../config/constants/types'
-
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
 
 const ZERO = new BigNumber(0)
 
@@ -80,6 +74,7 @@ export const useFarm3User = (pid) => {
     earnings: farm3.userData ? new BigNumber(farm3.userData.earnings) : new BigNumber(0),
   }
 }
+
 // Pools
 
 export const usePools = (account: string): Pool[] => {
@@ -98,163 +93,54 @@ export const usePoolFromPid = (sousId: number): Pool =>
   useSelector((state: State) => state.pools.data.find((p) => p.sousId === sousId))
 
 // Prices
+// SOL price derived from SOL-USDC LP farm (pid 43)
 
-export const usePriceBnbBusd = (): BigNumber => {
-  const pid = 43 // BUSD-BNB LP
+export const usePriceSolUsdc = (): BigNumber => {
+  const pid = 43 // SOL-USDC LP
   const farm = useFarmFromPid(pid)
   return farm?.tokenPriceVsQuote ? new BigNumber(farm?.tokenPriceVsQuote) : ZERO
 }
 
+// Keep usePriceBnbBusd as alias for backwards compatibility with views
+export const usePriceBnbBusd = usePriceSolUsdc
+
 export const usePriceCakeBusd = (): BigNumber => {
-  // const pid = 1 // CAKE-BNB LP
-  // const bnbPriceUSD = usePriceBnbBusd()
-  // const farm = useFarmFromPid(pid)
-  // return farm.tokenPriceVsQuote ? bnbPriceUSD.times(farm.tokenPriceVsQuote) : ZERO
-  const pid = 33; // EGG-BUSD LP
-  const farm = useFarmFromPid(pid);
-  return farm.tokenPriceVsQuote ? new BigNumber(farm.tokenPriceVsQuote) : ZERO;
+  const pid = 33 // DBALL-USDC LP
+  const farm = useFarmFromPid(pid)
+  return farm?.tokenPriceVsQuote ? new BigNumber(farm?.tokenPriceVsQuote) : ZERO
 }
 
-// export const usePriceEthBusd = (): BigNumber => {
-//   const [ethPrice, setEthPrice] = useState(new BigNumber(1900))
-
-//   useEffect(() => {
-//     const fetchPrice = async () => {
-//       const CoinGeckoClient = new CoinGecko()
-//       const result = await CoinGeckoClient.coins.fetch('ethereum', {})
-//       setEthPrice(new BigNumber(result.data?.market_data?.current_price?.usd))
-//     }
-
-//     fetchPrice()
-//   }, [])
-
-//   return ethPrice
-// }
-
-
-export const usePriceEthBusd = () => {
-  const [price, setPrice] = useState(new BigNumber(0))
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      const lpAddress = '0xd9A0d1F5e02dE2403f68Bb71a15F8847A854b494'
-      const [wbnbTokenBalanceLP, eggTokenBalanceLP] = await multicall(erc20, [
-        {
-          address: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
-          name: 'balanceOf',
-          params: [lpAddress],
-        },
-        {
-          address: '0x2170ed0880ac9a755fd29b2688956bd959f933f8',
-          name: 'balanceOf',
-          params: [lpAddress],
-        },
-      ])
-
-      if (!eggTokenBalanceLP || !wbnbTokenBalanceLP) return
-
-      setPrice(new BigNumber(wbnbTokenBalanceLP).div(new BigNumber(eggTokenBalanceLP)))
-    }
-
-    fetchPrice()
-  }, [])
-
-  return price
+export const usePriceEthBusd = (): BigNumber => {
+  const pid = 45 // ETH-SOL LP
+  const solPrice = usePriceSolUsdc()
+  const farm = useFarmFromPid(pid)
+  return farm?.tokenPriceVsQuote ? solPrice.times(farm.tokenPriceVsQuote) : ZERO
 }
 
-
-export const usePriceCake2Busd = () => {
-  const [price, setPrice] = useState(new BigNumber(0))
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      const lpAddress = '0x0Ed8E0A2D99643e1e65CCA22Ed4424090B8B7458'
-      const [wbnbTokenBalanceLP, eggTokenBalanceLP] = await multicall(erc20, [
-        {
-          address: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
-          name: 'balanceOf',
-          params: [lpAddress],
-        },
-        {
-          address: '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82',
-          name: 'balanceOf',
-          params: [lpAddress],
-        },
-      ])
-
-      if (!eggTokenBalanceLP || !wbnbTokenBalanceLP) return
-
-      setPrice(new BigNumber(wbnbTokenBalanceLP).div(new BigNumber(eggTokenBalanceLP)))
-    }
-
-    fetchPrice()
-  }, [])
-
-  return price
+export const usePriceCake2Busd = (): BigNumber => {
+  // Placeholder - no PancakeSwap CAKE equivalent on Solana
+  return ZERO
 }
 
-// export const usePriceBTCBBusd = (): BigNumber => {
-//   const [btcbPrice, setEthPrice] = useState(new BigNumber(10))
-
-//   useEffect(() => {
-//     const fetchPrice = async () => {
-//       const CoinGeckoClient = new CoinGecko()
-//       const result = await CoinGeckoClient.coins.fetch('bitcoinbrand', {})
-//       setEthPrice(new BigNumber(result.data?.market_data?.current_price?.usd))
-//     }
-
-//     fetchPrice()
-//   }, [])
-
-//   return btcbPrice
-// }
-
-export const usePriceBTCBBusd = () => {
-  const [price, setPrice] = useState(new BigNumber(0))
-
-  useEffect(() => {
-    const fetchPrice = async () => {
-      const lpAddress = '0xb8875e207EE8096a929D543C9981C9586992eAcb' // BTCB/BNB LP
-      const [wbnbTokenBalanceLP, btcbTokenBalanceLP] = await multicall(erc20, [
-        {
-          address: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
-          name: 'balanceOf',
-          params: [lpAddress],
-        },
-        {
-          address: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c',
-          name: 'balanceOf',
-          params: [lpAddress],
-        },
-      ])
-
-      if (!btcbTokenBalanceLP || !wbnbTokenBalanceLP) return
-
-      setPrice(new BigNumber(wbnbTokenBalanceLP).div(new BigNumber(btcbTokenBalanceLP)))
-    }
-
-    fetchPrice()
-  }, [])
-
-  return price
+export const usePriceBTCBBusd = (): BigNumber => {
+  const pid = 46 // BTC-SOL LP
+  const solPrice = usePriceSolUsdc()
+  const farm = useFarmFromPid(pid)
+  return farm?.tokenPriceVsQuote ? solPrice.times(farm.tokenPriceVsQuote) : ZERO
 }
 
 export const useTotalValue = (): BigNumber => {
   const farms = useFarms()
-  const bnbPrice = usePriceBnbBusd()
+  const solPrice = usePriceSolUsdc()
   const senzuPrice = usePrice3CakeBusd()
-  const cake2Price = usePriceCake2Busd()
   const ethPrice = usePriceEthBusd()
-  const btcbPrice2 = usePriceBTCBBusd()
+  const btcbPrice = usePriceBTCBBusd()
 
-  
-
-  const usdtPrice: BigNumber = useMemo(() => {
-    return new BigNumber(1)
-  }, [])
+  const usdtPrice: BigNumber = useMemo(() => new BigNumber(1), [])
   const cakePrice = usePriceCakeBusd()
 
-  const { account } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const pools = usePools(account)
   const totalValue = useRef(new BigNumber(0))
 
@@ -264,18 +150,16 @@ export const useTotalValue = (): BigNumber => {
       const farm = farms[i]
       if (farm.lpTotalInQuoteToken) {
         let val
-        if (farm.quoteTokenSymbol === QuoteToken.BNB) {
-          val = bnbPrice.times(farm.lpTotalInQuoteToken)
+        if (farm.quoteTokenSymbol === QuoteToken.SOL) {
+          val = solPrice.times(farm.lpTotalInQuoteToken)
         } else if (farm.quoteTokenSymbol === QuoteToken.SENZU) {
           val = senzuPrice.times(farm.lpTotalInQuoteToken)
-        } else if (farm.quoteTokenSymbol === QuoteToken.CAKE2) {
-          val = cake2Price.times(farm.lpTotalInQuoteToken)
         } else if (farm.quoteTokenSymbol === QuoteToken.CAKE) {
           val = cakePrice.times(farm.lpTotalInQuoteToken)
         } else if (farm.quoteTokenSymbol === QuoteToken.USDT) {
           val = usdtPrice.times(farm.lpTotalInQuoteToken)
         } else if (farm.quoteTokenSymbol === QuoteToken.BTCB) {
-          val = btcbPrice2.times(farm.lpTotalInQuoteToken)
+          val = btcbPrice.times(farm.lpTotalInQuoteToken)
         } else if (farm.quoteTokenSymbol === QuoteToken.ETH) {
           val = ethPrice.times(farm.lpTotalInQuoteToken)
         } else {
@@ -290,15 +174,14 @@ export const useTotalValue = (): BigNumber => {
       const pool = pools[i]
       let poolValue: BigNumber
       if (pool.stakingTokenName === QuoteToken.DBALL) {
-        const totalSaltStaked = new BigNumber(pool.totalStaked).div(new BigNumber(10).pow(18))
-        poolValue = cakePrice.times(totalSaltStaked)
+        const totalStaked = new BigNumber(pool.totalStaked).div(new BigNumber(10).pow(9))
+        poolValue = cakePrice.times(totalStaked)
       }
-
       poolsTotalValue = poolsTotalValue.plus(poolValue ?? ZERO)
     }
 
-    totalValue.current = farmsTotalValue
-  }, [bnbPrice, senzuPrice, farms, pools, cakePrice, cake2Price, usdtPrice, ethPrice, btcbPrice2])
+    totalValue.current = farmsTotalValue.plus(poolsTotalValue)
+  }, [solPrice, senzuPrice, farms, pools, cakePrice, usdtPrice, ethPrice, btcbPrice])
 
   if (!totalValue) {
     return new BigNumber(0)
@@ -306,46 +189,42 @@ export const useTotalValue = (): BigNumber => {
   return totalValue.current
 }
 
+// Prices3 (Layer farms)
 
-// Prices3
-
-export const usePrice3BnbBusd = (): BigNumber => {
-  const pid = 9 // BUSD-BNB LP
+export const usePrice3SolUsdc = (): BigNumber => {
+  const pid = 9 // SOL-USDC LP in farms3
   const farm = useFarm3FromPid(pid)
   return farm?.tokenPriceVsQuote ? new BigNumber(farm?.tokenPriceVsQuote) : ZERO
 }
 
+// Keep BNB alias for backwards compat
+export const usePrice3BnbBusd = usePrice3SolUsdc
+
 export const usePrice3CakeBusd = (): BigNumber => {
-  // const pid = 1 // CAKE-BNB LP
-  // const bnbPriceUSD = usePriceBnbBusd()
-  // const farm = useFarmFromPid(pid)
-  // return farm.tokenPriceVsQuote ? bnbPriceUSD.times(farm.tokenPriceVsQuote) : ZERO
-  const pid = 1; // EGG-BUSD LP
-  const farm = useFarm3FromPid(pid);
-  return farm.tokenPriceVsQuote ? new BigNumber(farm.tokenPriceVsQuote) : ZERO;
+  const pid = 1 // SL1-USDC LP in farms3
+  const farm = useFarm3FromPid(pid)
+  return farm?.tokenPriceVsQuote ? new BigNumber(farm?.tokenPriceVsQuote) : ZERO
 }
 
 export const useTotalValue3 = (): BigNumber => {
-  const farms = useFarms3();
-  const bnbPrice = usePrice3BnbBusd();
-  const cakePrice = usePrice3CakeBusd();
+  const farms = useFarms3()
+  const solPrice = usePrice3SolUsdc()
+  const cakePrice = usePrice3CakeBusd()
 
-
-  let value = new BigNumber(0);
+  let value = new BigNumber(0)
   for (let i = 0; i < farms.length; i++) {
     const farm = farms[i]
     if (farm.lpTotalInQuoteToken) {
-      let val;
-      if (farm.quoteTokenSymbol === QuoteToken.BNB) {
-        val = (bnbPrice.times(farm.lpTotalInQuoteToken));
-      }else if (farm.quoteTokenSymbol === QuoteToken.CAKE) {
-        val = (cakePrice.times(farm.lpTotalInQuoteToken));
-      }else{
-        val = (farm.lpTotalInQuoteToken);
+      let val
+      if (farm.quoteTokenSymbol === QuoteToken.SOL) {
+        val = solPrice.times(farm.lpTotalInQuoteToken)
+      } else if (farm.quoteTokenSymbol === QuoteToken.CAKE) {
+        val = cakePrice.times(farm.lpTotalInQuoteToken)
+      } else {
+        val = farm.lpTotalInQuoteToken
       }
-      value = value.plus(val);
-
+      value = value.plus(val)
     }
   }
-  return value;
+  return value
 }

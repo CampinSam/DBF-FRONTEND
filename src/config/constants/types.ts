@@ -16,32 +16,37 @@ export interface Ifo {
   currency: string
   currencyAddress: string
   tokenDecimals: number
+  startBlock?: number
+  endBlock?: number
 }
 
 export enum QuoteToken {
-  'BNB' = 'BNB',
+  'SOL' = 'SOL',
   'CAKE' = 'CAKE',
   'SYRUP' = 'SYRUP',
-  'BUSD' = 'BUSD',
+  'USDC' = 'USDC',
   'TWT' = 'TWT',
   'USDT' = 'USDT',
   'CAKE2' = 'CAKE2',
   'SENZU' = 'SENZU',
-  'DBALL'='DBALL',
-  'BTCB'='BTCB',
+  'DBALL' = 'DBALL',
+  'BTCB' = 'BTCB',
   'ETH' = 'ETH',
-  'SL1'='SL1',
+  'SL1' = 'SL1',
+  // Keep BUSD as alias for USDC for backwards-compat with farm configs
+  'BUSD' = 'USDC',
 }
 
 export enum PoolCategory {
   'COMMUNITY' = 'Community',
   'CORE' = 'Core',
-  'BINANCE' = 'Binance', // Pools using native BNB behave differently than pools using a token
+  'SOLANA' = 'Solana', // Pools using native SOL behave differently than pools using a token
 }
 
+// Solana cluster-keyed address map
 export interface Address {
-  97?: string
-  56: string
+  devnet?: string
+  'mainnet-beta': string
 }
 
 export interface FarmConfig {

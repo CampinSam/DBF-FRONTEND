@@ -1,96 +1,74 @@
 import pools from 'config/constants/pools'
-import erc20ABI from 'config/abi/erc20.json'
-import sousChefABI from 'config/abi/sousChef.json'
 import { QuoteToken } from 'config/constants/types'
-import multicall from 'utils/multicall'
-import { getWeb3 } from 'utils/web3'
 import BigNumber from 'bignumber.js'
+import { LAMPORTS_PER_SOL } from '@solana/web3.js'
+import { getConnection } from 'utils/solana'
+import { getAllowance, getTokenBalance } from 'utils/erc20'
 
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
-// Pool 0, Cake / Cake is a different kind of contract (master chef)
-// BNB pools use the native BNB token (wrapping ? unwrapping is done at the contract level)
-const nonBnbPools = pools.filter((p) => p.stakingTokenName !== QuoteToken.BNB)
-const bnbPools = pools.filter((p) => p.stakingTokenName === QuoteToken.BNB)
-const web3 = getWeb3()
+// Non-SOL pools: SPL token staking
+const nonSolPools = pools.filter((p) => p.stakingTokenName !== QuoteToken.SOL)
+// SOL pools: native SOL staking
+const solPools = pools.filter((p) => p.stakingTokenName === QuoteToken.SOL)
 
-export const fetchPoolsAllowance = async (account) => {
-  const calls = nonBnbPools.map((p) => ({
-    address: p.stakingTokenAddress[CHAIN_ID],
-    name: 'allowance',
-    params: [account, p.contractAddress[CHAIN_ID]],
-  }))
+export const fetchPoolsAllowance = async (account: string) => {
+  const allowancesMap = await Promise.all(
+    nonSolPools.map(async (pool) => {
+      const stakingMint = pool.stakingTokenAddress?.[CLUSTER]
+      const contractAddress = pool.contractAddress[CLUSTER]
+      if (!stakingMint || !contractAddress) {
+        return { sousId: pool.sousId, allowance: '0' }
+      }
+      const allowance = await getAllowance(stakingMint, account, contractAddress)
+      return { sousId: pool.sousId, allowance: new BigNumber(allowance).toJSON() }
+    }),
+  )
+  return allowancesMap.reduce((acc, { sousId, allowance }) => ({ ...acc, [sousId]: allowance }), {})
+}
 
-  const allowances = await multicall(erc20ABI, calls)
-  return nonBnbPools.reduce(
-    (acc, pool, index) => ({ ...acc, [pool.sousId]: new BigNumber(allowances[index]).toJSON() }),
+export const fetchUserBalances = async (account: string) => {
+  // SPL token balances
+  const tokenBalances = await Promise.all(
+    nonSolPools.map(async (pool) => {
+      const stakingMint = pool.stakingTokenAddress?.[CLUSTER]
+      if (!stakingMint) return { sousId: pool.sousId, balance: '0' }
+      const balance = await getTokenBalance(stakingMint, account)
+      return { sousId: pool.sousId, balance: new BigNumber(balance).toJSON() }
+    }),
+  )
+  const tokenBalancesMap = tokenBalances.reduce(
+    (acc, { sousId, balance }) => ({ ...acc, [sousId]: balance }),
+    {},
+  )
+
+  // Native SOL balance
+  const connection = getConnection()
+  const { PublicKey } = await import('@solana/web3.js')
+  const lamports = await connection.getBalance(new PublicKey(account))
+  const solBalance = new BigNumber(lamports).toJSON()
+  const solBalancesMap = solPools.reduce(
+    (acc, pool) => ({ ...acc, [pool.sousId]: solBalance }),
+    {},
+  )
+
+  return { ...tokenBalancesMap, ...solBalancesMap }
+}
+
+export const fetchUserStakeBalances = async (account: string) => {
+  // Pool stake accounts are managed by the Anchor program PDA.
+  // Returns 0 until on-chain programs are deployed.
+  return pools.reduce(
+    (acc, pool) => ({ ...acc, [pool.sousId]: new BigNumber(0).toJSON() }),
     {},
   )
 }
 
-export const fetchUserBalances = async (account) => {
-  // Non BNB pools
-  const calls = nonBnbPools.map((p) => ({
-    address: p.stakingTokenAddress[CHAIN_ID],
-    name: 'balanceOf',
-    params: [account],
-  }))
-  const tokenBalancesRaw = await multicall(erc20ABI, calls)
-  const tokenBalances = nonBnbPools.reduce(
-    (acc, pool, index) => ({ ...acc, [pool.sousId]: new BigNumber(tokenBalancesRaw[index]).toJSON() }),
+export const fetchUserPendingRewards = async (account: string) => {
+  // Pending rewards are tracked in the pool program's PDA accounts.
+  // Returns 0 until on-chain programs are deployed.
+  return pools.reduce(
+    (acc, pool) => ({ ...acc, [pool.sousId]: new BigNumber(0).toJSON() }),
     {},
   )
-
-  // BNB pools
-  const bnbBalance = await web3.eth.getBalance(account)
-  const bnbBalances = bnbPools.reduce(
-    (acc, pool) => ({ ...acc, [pool.sousId]: new BigNumber(bnbBalance).toJSON() }),
-    {},
-  )
-
-  return { ...tokenBalances, ...bnbBalances }
-}
-
-export const fetchUserStakeBalances = async (account) => {
-  const cakePools = pools
-  const cakeUserInfo = await multicall(
-    sousChefABI,
-    cakePools.map((p) => ({
-      address: p.contractAddress[CHAIN_ID],
-      name: 'userInfo',
-      params: [account],
-    })),
-  )
-
-  return {
-    ...pools.reduce(
-      (acc, pool, index) => ({
-        ...acc,
-        [pool.sousId]: new BigNumber(cakeUserInfo[index]?.amount._hex).toJSON(),
-      }),
-      {},
-    ),
-  }
-}
-
-export const fetchUserPendingRewards = async (account) => {
-  const cakePools = pools
-  const res = await multicall(
-    sousChefABI,
-    cakePools.map((p) => ({
-      address: p.contractAddress[CHAIN_ID],
-      name: 'pendingReward',
-      params: [account],
-    })),
-  )
-
-  return {
-    ...pools.reduce(
-      (acc, pool, index) => ({
-        ...acc,
-        [pool.sousId]: new BigNumber(res[index]).toJSON(),
-      }),
-      {},
-    ),
-  }
 }

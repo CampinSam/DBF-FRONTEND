@@ -1,62 +1,64 @@
+// Solana program IDs and SPL token mint addresses
+// Cluster: 'mainnet-beta' | 'devnet'
 export default {
+  // DBALL SPL token mint
   cake: {
-    56: '0xceB2f5e9C7F2D3BCd12A7560D73c56f3396af3F9',
-    97: '',
+    'mainnet-beta': 'DBaLLTokenMintAddressMainnet11111111111111111',
+    devnet: 'DBaLLTokenMintAddressDevnet1111111111111111',
   },
+  // MasterChef farming program
   masterChef: {
-    56: '0x8cf7044DDedbE502892B120aAf8692FeCFb71420',
-    97: '',
+    'mainnet-beta': 'MasterChefProgramIdMainnet111111111111111111',
+    devnet: 'MasterChefProgramIdDevnet1111111111111111111',
   },
+  // SENZU SPL token mint
   cake3: {
-    56: '0xcBA1813Ede683333020cedea7C3b63FbaC28e78e',
-    97: '',
+    'mainnet-beta': 'SENZUTokenMintAddressMainnet1111111111111111',
+    devnet: 'SENZUTokenMintAddressDevnet111111111111111111',
   },
+  // MasterChef3 (Cyclical Layer Farming) program
   masterChef3: {
-    56: '0x48F4eC8AD1cb16fB45f75733BFF41b4BE7f49B00',
-    97: '',
+    'mainnet-beta': 'MasterChef3ProgramIdMainnet11111111111111111',
+    devnet: 'MasterChef3ProgramIdDevnet111111111111111111',
   },
-  wbnb: {
-    56: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c',
-    97: '',
+  // Wrapped SOL mint (replaces WBNB)
+  wsol: {
+    'mainnet-beta': 'So11111111111111111111111111111111111111112',
+    devnet: 'So11111111111111111111111111111111111111112',
   },
+  // Lottery program
   lottery: {
-    56: '',
-    97: '',
+    'mainnet-beta': '',
+    devnet: '',
   },
+  // Lottery NFT program
   lotteryNFT: {
-    56: '',
-    97: '',
+    'mainnet-beta': '',
+    devnet: '',
   },
-  mulltiCall: {
-    56: '0x1ee38d535d541c55c9dae27b12edf090c608e6fb',
-    97: '0x67ADCB4dF3931b0C5Da724058ADC2174a9844412',
-  },
+  // USDC mint (replaces BUSD on Solana)
   busd: {
-    56: '0xe9e7cea3dedca5984780bafc599bd69add087d56',
-    97: '',
+    'mainnet-beta': 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    devnet: '4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU',
   },
+  // USDT mint
   usdt: {
-    56: '0x55d398326f99059ff775485246999027b3197955',
-    97: '',
+    'mainnet-beta': 'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+    devnet: 'BQcdHdAQW1hczDbBi9hiegXAR7A98Q9jx3X3iBBBDiq4',
   },
-  cake2: {
-    56: '0x0e09fabb73bd3ade0a17ecc321fd13a19e81ce82',
-    97: '',
-  },
-  senzu: {
-    56: '0xcba1813ede683333020cedea7c3b63fbac28e78e',
-    97: '',
-  },
-  btcb: {
-    56: '0x7130d2a12b9bcbfae4f2634d864a1ee1ce3ead9c',
-    97: '',
-  },
-  eth: {
-    56: '0x2170ed0880ac9a755fd29b2688956bd959f933f8',
-    97: '',
-  },
+  // SL1 SPL token mint
   sl1: {
-    56: '0xd89745A21C3EB87CfbC0C0e6EB6a30974cAdbD90',
-    97: '',
-  }
+    'mainnet-beta': 'SL1TokenMintAddressMainnet111111111111111111',
+    devnet: 'SL1TokenMintAddressDevnet1111111111111111111',
+  },
+  // Wrapped BTC mint
+  btcb: {
+    'mainnet-beta': '9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E',
+    devnet: 'C6kYXcaRUMqeBF5fhg165RWU7AnpT9z92fvKNoMqjmz6',
+  },
+  // Wrapped ETH mint
+  eth: {
+    'mainnet-beta': '7vfCXTUXx5WJV5JADk17DUJ4ksgau7utNKj4b963voxs',
+    devnet: 'C6kYXcaRUMqeBF5fhg165RWU7AnpT9z92fvKNoMqjmz6',
+  },
 }

@@ -2,6 +2,15 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' 'unsafe-eval' 'unsafe-inline';
+               style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+               font-src 'self' https://fonts.gstatic.com;
+               img-src 'self' data: https:;
+               connect-src 'self' https://*.solana.com https://solana-api.projectserum.com https://*.genesysgo.net https://api.pancakeswap.com wss:;
+               frame-src https://drive.google.com;
+               object-src 'none';" />
     <!-- Links -->
     <link rel="preconnect" href="%REACT_APP_NODE_1%" />
     <link rel="preconnect" href="%REACT_APP_NODE_2%" />
@@ -15,17 +24,17 @@
     <title>Dragon Ball Finance</title>
     <meta
       name="description"
-      content="Cheaper and faster than Uniswap? Discover Dragon Ball Finance, the leading DEX on Binance Smart Chain (BSC) with the best farms in DeFi and a lottery for DBALL."
+      content="Discover Dragon Ball Finance, a DeFi platform on Solana with yield farming, staking pools, and a lottery for DBALL."
     />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, minimum-scale=1" />
     <meta name="theme-color" content="#000000" />
     <meta name="twitter:image" content="%PUBLIC_URL%/images/egg/hero.png" />
     <meta
       name="twitter:description"
-      content="The first Dragon Ball DeFi Platform on the Binance Smart Chain"
+      content="The Dragon Ball DeFi Platform on Solana — yield farming, staking, and lottery for DBALL."
     />
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="🐲 Dragon Ball Finance - A next evolution DeFi exchange on Binance Smart Chain (BSC)" />
+    <meta name="twitter:title" content="Dragon Ball Finance - DeFi on Solana" />
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

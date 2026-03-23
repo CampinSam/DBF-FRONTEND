@@ -1,7 +1,7 @@
 /* eslint-disable no-param-reassign */
 import { createSlice } from '@reduxjs/toolkit'
 import poolsConfig from 'config/constants/pools'
-import { fetchPoolsBlockLimits, fetchPoolsTotalStaking } from './fetchPools'
+import { fetchPoolsSlotLimits as fetchPoolsBlockLimits, fetchPoolsTotalStaking } from './fetchPools'
 import {
   fetchPoolsAllowance,
   fetchUserBalances,

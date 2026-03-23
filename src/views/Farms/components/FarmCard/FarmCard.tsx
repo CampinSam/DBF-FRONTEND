@@ -4,7 +4,6 @@ import styled, { keyframes } from 'styled-components'
 import { Flex, Text, Skeleton } from 'dragonball-uikit'
 import { communityFarms } from 'config/constants'
 import { Farm } from 'state/types'
-import { provider } from 'web3-core'
 import useI18n from 'hooks/useI18n'
 import ExpandableSectionButton from 'components/ExpandableSectionButton'
 import { QuoteToken } from 'config/constants/types'
@@ -88,11 +87,10 @@ interface FarmCardProps {
   ethPrice?: BigNumber
   cake2Price?: BigNumber
   btcbPrice2?: BigNumber
-  ethereum?: provider
   account?: string
 }
 
-const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPrice, bnbPrice, ethPrice, btcbPrice2, cake2Price, ethereum, account }) => {
+const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPrice, bnbPrice, ethPrice, btcbPrice2, cake2Price, account }) => {
   const TranslateString = useI18n()
 
   const [showExpandableSection, setShowExpandableSection] = useState(false)
@@ -108,7 +106,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPric
     if (!farm.lpTotalInQuoteToken) {
       return null
     }
-    if (farm.quoteTokenSymbol === QuoteToken.BNB) {
+    if (farm.quoteTokenSymbol === QuoteToken.SOL) {
       return bnbPrice.times(farm.lpTotalInQuoteToken)
     }
     if (farm.quoteTokenSymbol === QuoteToken.CAKE) {
@@ -197,7 +195,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPric
         <Text style={{ fontSize: '24px' }}>{TranslateString(10011, 'Unstaking Fee')}:</Text>
         <Text bold style={{ fontSize: '24px' }}>{(farm.unstakingFeeBP / 100)}%</Text>
       </Flex> */}
-      <CardActionsContainer farm={farm} ethereum={ethereum} account={account} />
+      <CardActionsContainer farm={farm} account={account} />
       <Divider />
       <ExpandableSectionButton
         onClick={() => setShowExpandableSection(!showExpandableSection)}
@@ -209,9 +207,9 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, senzuPric
           isTokenOnly={farm.isTokenOnly}
           bscScanAddress={
             farm.isTokenOnly ?
-              `https://bscscan.com/token/${farm.tokenAddresses[process.env.REACT_APP_CHAIN_ID]}`
+              `https://solscan.io/token/${farm.tokenAddresses[process.env.REACT_APP_SOLANA_CLUSTER || 'devnet']}`
               :
-              `https://bscscan.com/token/${farm.lpAddresses[process.env.REACT_APP_CHAIN_ID]}`
+              `https://solscan.io/token/${farm.lpAddresses[process.env.REACT_APP_SOLANA_CLUSTER || 'devnet']}`
           }
           totalValueFormated={totalValueFormated}
           lpLabel={lpLabel}

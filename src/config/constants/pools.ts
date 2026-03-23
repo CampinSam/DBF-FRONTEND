@@ -503,52 +503,52 @@ const pools: PoolConfig[] = [
   // },
   {
     sousId: 20,
-    tokenName: 'WBNB',
+    tokenName: 'WSOL',
     stakingTokenName: QuoteToken.DBALL,
     stakingTokenAddress: {
-      97: '0x85582d24455caaf44fc4f914bdca2a6cb73e6681',
-      56: '0xceB2f5e9C7F2D3BCd12A7560D73c56f3396af3F9', // CAKE
+      devnet: 'DBaLLTokenMintAddressDevnet1111111111111111',
+      'mainnet-beta': 'DBaLLTokenMintAddressMainnet11111111111111111', // DBALL mint
     },
     contractAddress: {
-      97: '0xF08d05d91426A63aB35Ef7f4bBC6E8717B59e838',
-      56: '0xa589a74D31e503073D7c7932a67AbD3f20F9eeB4', // SmartChef
+      devnet: 'WSOLPoolProgramDevnet1111111111111111111111',
+      'mainnet-beta': 'WSOLPoolProgramMainnet111111111111111111111', // SmartChef program
     },
     rewardTokenAddress: {
-      97: '0xec5dcb5dbf4b114c9d0f65bccab49ec54f6a0867', // DAI, didnt had WBNB
-      56: '0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c', // WBNB
+      devnet: 'So11111111111111111111111111111111111111112',
+      'mainnet-beta': 'So11111111111111111111111111111111111111112', // WSOL
     },
-    poolCategory: PoolCategory.CORE,
-    projectLink: 'https://binance.com/',
+    poolCategory: PoolCategory.SOLANA,
+    projectLink: 'https://solana.com/',
     harvest: true,
     tokenPerBlock: '0.00003651736111',
     sortOrder: 19,
     isFinished: false,
-    tokenDecimals: 18,
+    tokenDecimals: 9,
     burnFee: 30,
   },
   {
     sousId: 21,
-    tokenName: 'CAKE',
+    tokenName: 'SOL',
     stakingTokenName: QuoteToken.DBALL,
     stakingTokenAddress: {
-      97: '0x85582d24455caaf44fc4f914bdca2a6cb73e6681',
-      56: '0xceB2f5e9C7F2D3BCd12A7560D73c56f3396af3F9', // CAKE
+      devnet: 'DBaLLTokenMintAddressDevnet1111111111111111',
+      'mainnet-beta': 'DBaLLTokenMintAddressMainnet11111111111111111', // DBALL mint
     },
     contractAddress: {
-      97: '0x9FcA113B2D4E64462229E107A8F4Aa7359D055F5',
-      56: '0xBa7D3031425B824464548b182374457949c5A6ac', // SmartChef
+      devnet: 'SOLPoolProgramDevnet11111111111111111111111',
+      'mainnet-beta': 'SOLPoolProgramMainnet1111111111111111111111', // SmartChef program
     },
     rewardTokenAddress: {
-      97: '0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee', // BUSD, didnt find CAKE
-      56: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', // CAKE
+      devnet: 'So11111111111111111111111111111111111111112',
+      'mainnet-beta': 'So11111111111111111111111111111111111111112', // SOL
     },
-    poolCategory: PoolCategory.CORE,
-    projectLink: 'https://pancakeswap.finance/',
+    poolCategory: PoolCategory.SOLANA,
+    projectLink: 'https://solana.com/',
     harvest: true,
     tokenPerBlock: '0.0004375',
     sortOrder: 20,
     isFinished: false,
-    tokenDecimals: 18,
+    tokenDecimals: 9,
     burnFee: 30,
   },
   {
@@ -556,16 +556,16 @@ const pools: PoolConfig[] = [
     tokenName: 'SENZU',
     stakingTokenName: QuoteToken.DBALL,
     stakingTokenAddress: {
-      97: '0x85582d24455caaf44fc4f914bdca2a6cb73e6681',
-      56: '0xceB2f5e9C7F2D3BCd12A7560D73c56f3396af3F9', // DBALL
+      devnet: 'DBaLLTokenMintAddressDevnet1111111111111111',
+      'mainnet-beta': 'DBaLLTokenMintAddressMainnet11111111111111111', // DBALL mint
     },
     contractAddress: {
-      97: '',
-      56: '0xB7Fd669b7FeB52086513c99E5598728814eF1aa0', // SmartChef
+      devnet: 'SENZUPoolProgramDevnet1111111111111111111111',
+      'mainnet-beta': 'SENZUPoolProgramMainnet111111111111111111111', // SmartChef program
     },
     rewardTokenAddress: {
-      97: '0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee', // BUSD, didnt find CAKE
-      56: '0xcba1813ede683333020cedea7c3b63fbac28e78e', // SENZU
+      devnet: 'SENZUTokenMintAddressDevnet111111111111111111',
+      'mainnet-beta': 'SENZUTokenMintAddressMainnet1111111111111111', // SENZU
     },
     poolCategory: PoolCategory.CORE,
     projectLink: 'https://dragonballfinance.org/',
@@ -573,7 +573,7 @@ const pools: PoolConfig[] = [
     tokenPerBlock: '0.00003651736111',
     sortOrder: 21,
     isFinished: false,
-    tokenDecimals: 18,
+    tokenDecimals: 9,
     burnFee: 30,
   },
 ]

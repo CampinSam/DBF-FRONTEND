@@ -4,8 +4,8 @@ const ifos: Ifo[] = [
   {
     id: 'rebasingprotocol',
     address: {
-      56: '0xE5A1ab7017b3b01ec6C0b68790f28577c734e2b1',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0xE5A1ab7017b3b01ec6C0b68790f28577c734e2b1',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: false,
     name: 'RebasingProtocol',
@@ -16,7 +16,7 @@ const ifos: Ifo[] = [
     saleAmount: '5200',
     raiseAmount: '400',
     projectSiteUrl: 'https://rebasing.live',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xDd3F196c59Df7bdABc18BBcfFb6440298AE117e2',
     tokenDecimals: 9,
     maxContribution: '50',
@@ -25,8 +25,8 @@ const ifos: Ifo[] = [
   {
     id: 'momoprotocol',
     address: {
-      56: '0x665807C7531810EC676D90639e339e662B363dd0',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0x665807C7531810EC676D90639e339e662B363dd0',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: false,
     name: 'MomoProtocol',
@@ -37,7 +37,7 @@ const ifos: Ifo[] = [
     saleAmount: '730 000',
     raiseAmount: '2000',
     projectSiteUrl: 'https://momoprotocol.finance/#/',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xafb2997fe9a99022e61c7e01b974e0e3d7704b02',
     tokenDecimals: 18,
     maxContribution: '100',
@@ -46,8 +46,8 @@ const ifos: Ifo[] = [
   {
     id: 'coolswap',
     address: {
-      56: '0x86e17Aa9D1496F6cde7f8ce0BeF2777995e1AAf2',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0x86e17Aa9D1496F6cde7f8ce0BeF2777995e1AAf2',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: false,
     name: 'CoolSwap.finance',
@@ -57,7 +57,7 @@ const ifos: Ifo[] = [
     saleAmount: '625 000',
     raiseAmount: '500',
     projectSiteUrl: 'https://coolswap.finance/',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xafb2997fe9a99022e61c7e01b974e0e3d7704b02',
     tokenDecimals: 18,
     maxContribution: '100',
@@ -66,8 +66,8 @@ const ifos: Ifo[] = [
   {
     id: 'railoracle',
     address: {
-      56: '0x895338334AA1f30CA9442e00aB7E7B2920269170',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0x895338334AA1f30CA9442e00aB7E7B2920269170',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: false,
     name: 'Railoracle',
@@ -77,7 +77,7 @@ const ifos: Ifo[] = [
     saleAmount: '944 520',
     raiseAmount: '3704',
     projectSiteUrl: 'https://www.railoracle.io',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xafb2997fe9a99022e61c7e01b974e0e3d7704b02',
     tokenDecimals: 18,
     maxContribution: '200',
@@ -86,8 +86,8 @@ const ifos: Ifo[] = [
   {
     id: 'digimonswap',
     address: {
-      56: '0x08A247931Db82dd3EbB9d152A81461B02c3F4f76',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0x08A247931Db82dd3EbB9d152A81461B02c3F4f76',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: false,
     name: 'Digimonswap',
@@ -99,7 +99,7 @@ const ifos: Ifo[] = [
     saleAmount: '65 000',
     raiseAmount: '500',
     projectSiteUrl: 'https://Digimonswap.org',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xafb2997fe9a99022e61c7e01b974e0e3d7704b02',
     tokenDecimals: 18,
     maxContribution: '100',
@@ -108,8 +108,8 @@ const ifos: Ifo[] = [
   {
     id: 'dragonballfinance',
     address: {
-      56: '0xcCbA5B635F848df728A5F5039cbE997F7c1F45cA',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0xcCbA5B635F848df728A5F5039cbE997F7c1F45cA',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: false,
     name: 'DragonBallFinance',
@@ -119,7 +119,7 @@ const ifos: Ifo[] = [
     saleAmount: '250 000',
     raiseAmount: '500',
     projectSiteUrl: 'https://dragonballfinance.org',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xafb2997fe9a99022e61c7e01b974e0e3d7704b02',
     tokenDecimals: 18,
     maxContribution: '100',
@@ -128,8 +128,8 @@ const ifos: Ifo[] = [
   {
     id: 'ozonefinance',
     address: {
-      56: '0xdF565B8d18A4286237E14d072b804C48aa83C1A3',
-      97: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
+      'mainnet-beta': '0xdF565B8d18A4286237E14d072b804C48aa83C1A3',
+      devnet: '0x8E3Be059992dee2a668902EED64bac9Bab134071',
     },
     isActive: true,
     name: 'Ozone Finance',
@@ -140,7 +140,7 @@ const ifos: Ifo[] = [
     saleAmount: '196 000',
     raiseAmount: '350',
     projectSiteUrl: 'https://ozone.finance',
-    currency: 'BNB',
+    currency: 'SOL',
     currencyAddress: '0xafb2997fe9a99022e61c7e01b974e0e3d7704b02',
     tokenDecimals: 18,
     maxContribution: '100',

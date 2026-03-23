@@ -1,16 +1,15 @@
 import React from 'react'
-import { Button, useWalletModal } from 'dragonball-uikit'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { Button } from 'dragonball-uikit'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import useI18n from 'hooks/useI18n'
 
 const UnlockButton = (props) => {
   const TranslateString = useI18n()
-  const { connect, reset } = useWallet()
-  const { onPresentConnectModal } = useWalletModal(connect, reset)
+  const { setVisible } = useWalletModal()
 
   return (
-    <Button onClick={onPresentConnectModal} {...props}>
-      {TranslateString(292, 'Unlock Wallet')}
+    <Button onClick={() => setVisible(true)} {...props}>
+      {TranslateString(292, 'Connect Wallet')}
     </Button>
   )
 }

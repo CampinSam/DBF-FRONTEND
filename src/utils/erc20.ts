@@ -1,38 +1,73 @@
-import Web3 from 'web3'
-import { provider as ProviderType } from 'web3-core'
-import { Contract } from 'web3-eth-contract'
-import { AbiItem } from 'web3-utils'
-import erc20 from 'config/abi/erc20.json'
+// Solana SPL token helpers (replaces ERC20 helpers)
+import { PublicKey } from '@solana/web3.js'
+import { getAccount, getAssociatedTokenAddress, getMint, TOKEN_PROGRAM_ID } from '@solana/spl-token'
+import { getConnection } from 'utils/solana'
 
-export const getContract = (provider: ProviderType, address: string) => {
-  const web3 = new Web3(provider)
-  const contract = new web3.eth.Contract((erc20 as unknown) as AbiItem, address)
-  return contract
-}
-
-export const getAllowance = async (
-  lpContract: Contract,
-  masterChefContract: Contract,
-  account: string,
+/**
+ * Get SPL token balance for a user wallet (replaces getTokenBalance)
+ */
+export const getTokenBalance = async (
+  mintAddress: string,
+  userAddress: string,
 ): Promise<string> => {
   try {
-    const allowance: string = await lpContract.methods.allowance(account, masterChefContract.options.address).call()
-    return allowance
+    const connection = getConnection()
+    const mint = new PublicKey(mintAddress)
+    const owner = new PublicKey(userAddress)
+    const ata = await getAssociatedTokenAddress(mint, owner)
+    const account = await getAccount(connection, ata)
+    return account.amount.toString()
   } catch (e) {
     return '0'
   }
 }
 
-export const getTokenBalance = async (
-  provider: ProviderType,
-  tokenAddress: string,
-  userAddress: string,
+/**
+ * Get SPL token delegation amount (replaces ERC20 allowance)
+ * On Solana, token approvals work via delegate amount on the token account
+ */
+export const getAllowance = async (
+  mintAddress: string,
+  ownerAddress: string,
+  delegateAddress: string,
 ): Promise<string> => {
-  const contract = getContract(provider, tokenAddress)
   try {
-    const balance: string = await contract.methods.balanceOf(userAddress).call()
-    return balance
+    const connection = getConnection()
+    const mint = new PublicKey(mintAddress)
+    const owner = new PublicKey(ownerAddress)
+    const ata = await getAssociatedTokenAddress(mint, owner)
+    const account = await getAccount(connection, ata)
+    if (account.delegate && account.delegate.toBase58() === delegateAddress) {
+      return account.delegatedAmount.toString()
+    }
+    return '0'
   } catch (e) {
     return '0'
+  }
+}
+
+/**
+ * Get SPL token total supply (replaces totalSupply)
+ */
+export const getTokenTotalSupply = async (mintAddress: string): Promise<string> => {
+  try {
+    const connection = getConnection()
+    const mintInfo = await getMint(connection, new PublicKey(mintAddress))
+    return mintInfo.supply.toString()
+  } catch (e) {
+    return '0'
+  }
+}
+
+/**
+ * Get SPL token decimals
+ */
+export const getTokenDecimals = async (mintAddress: string): Promise<number> => {
+  try {
+    const connection = getConnection()
+    const mintInfo = await getMint(connection, new PublicKey(mintAddress))
+    return mintInfo.decimals
+  } catch (e) {
+    return 9
   }
 }

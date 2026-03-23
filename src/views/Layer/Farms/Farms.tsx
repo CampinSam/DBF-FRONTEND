@@ -3,8 +3,7 @@ import { Route, useRouteMatch } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import BigNumber from 'bignumber.js'
 import styled from 'styled-components'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
-import { provider } from 'web3-core'
+import { useWallet } from '@solana/wallet-adapter-react'
 import CardNav from 'components/CardNav'
 import { Image, Heading, Text } from 'dragonball-uikit'
 import { BLOCKS_PER_YEAR } from 'config'
@@ -66,7 +65,8 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
   const farmsLP = useFarms3()
   const cakePrice = usePrice3CakeBusd()
   const bnbPrice = usePrice3BnbBusd()
-  const { account, ethereum }: { account: string; ethereum: provider } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const {tokenMode} = farmsProps;
 
   const dispatch = useDispatch()
@@ -103,7 +103,7 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
 
         let totalValue = new BigNumber(farm.lpTotalInQuoteToken || 0);
 
-        if (farm.quoteTokenSymbol === QuoteToken.BNB) {
+        if (farm.quoteTokenSymbol === QuoteToken.SOL) {
           totalValue = totalValue.times(bnbPrice);
         }
 
@@ -120,12 +120,11 @@ const Farms: React.FC<FarmsProps> = (farmsProps) => {
           removed={removed}
           bnbPrice={bnbPrice}
           cakePrice={cakePrice}
-          ethereum={ethereum}
           account={account}
         />
       ))
     },
-    [bnbPrice, account, cakePrice, ethereum],
+    [bnbPrice, account, cakePrice],
   )
 
   return (

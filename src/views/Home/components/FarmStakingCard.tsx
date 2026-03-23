@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react'
 import styled from 'styled-components'
 import { Heading, Card, CardBody, Button } from 'dragonball-uikit'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import useI18n from 'hooks/useI18n'
 import BigNumber from 'bignumber.js/bignumber'
 import { useAllHarvest } from 'hooks/useHarvest'
@@ -41,7 +41,8 @@ const Actions = styled.div`
 
 const FarmedStakingCard = () => {
   const [pendingTx, setPendingTx] = useState(false)
-  const { account } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const TranslateString = useI18n()
   const farmsWithBalance = useFarmsWithBalance()
   const cakeBalance = getBalanceNumber(useTokenBalance(getCakeAddress()))

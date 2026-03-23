@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
+import { useWallet } from '@solana/wallet-adapter-react'
 import { useLottery } from 'hooks/useContract'
 import { getLotteryStatus } from 'utils/lotteryUtils'
 
@@ -10,7 +10,8 @@ import { getLotteryStatus } from 'utils/lotteryUtils'
  */
 const useGetLotteryHasDrawn = () => {
   const [lotteryHasDrawn, setLotteryHasDrawn] = useState(true)
-  const { account } = useWallet()
+  const { publicKey } = useWallet()
+  const account = publicKey?.toBase58()
   const lotteryContract = useLottery()
 
   useEffect(() => {

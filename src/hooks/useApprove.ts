@@ -1,100 +1,98 @@
 import { useCallback } from 'react'
-import { useWallet } from '@binance-chain/bsc-use-wallet'
-import { Contract } from 'web3-eth-contract'
-import { ethers } from 'ethers'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
 import { useDispatch } from 'react-redux'
 import { updateUserAllowance, fetchFarmUserDataAsync, fetchFarm3UserDataAsync } from 'state/actions'
 import { approve } from 'utils/callHelpers'
 import { useMasterchef, useMasterchef3, useCake, useLottery, useSmartChef } from './useContract'
 
-// Approve a Farm
-export const useApprove = (lpContract: Contract) => {
+// Approve a Farm's LP token for the MasterChef program
+export const useApprove = (mintAddress: string) => {
   const dispatch = useDispatch()
-  const { account }: { account: string } = useWallet()
-  const masterChefContract = useMasterchef()
+  const wallet = useWallet()
+  const masterChefAddress = useMasterchef()?.programId
 
   const handleApprove = useCallback(async () => {
     try {
-      const tx = await approve(lpContract, masterChefContract, account)
-      dispatch(fetchFarmUserDataAsync(account))
+      const tx = await approve(
+        new PublicKey(mintAddress),
+        masterChefAddress,
+        wallet,
+      )
+      dispatch(fetchFarmUserDataAsync(wallet.publicKey.toBase58()))
       return tx
     } catch (e) {
       return false
     }
-  }, [account, dispatch, lpContract, masterChefContract])
+  }, [wallet, dispatch, mintAddress, masterChefAddress])
 
   return { onApprove: handleApprove }
 }
 
-// Approve a Farm3
-export const useApprove3 = (lpContract: Contract) => {
+// Approve a Farm3 LP token for the MasterChef3 program
+export const useApprove3 = (mintAddress: string) => {
   const dispatch = useDispatch()
-  const { account }: { account: string } = useWallet()
-  const masterChef3Contract = useMasterchef3()
+  const wallet = useWallet()
+  const masterChef3Address = useMasterchef3()?.programId
 
   const handleApprove = useCallback(async () => {
     try {
-      const tx = await approve(lpContract, masterChef3Contract, account)
-      dispatch(fetchFarm3UserDataAsync(account))
+      const tx = await approve(
+        new PublicKey(mintAddress),
+        masterChef3Address,
+        wallet,
+      )
+      dispatch(fetchFarm3UserDataAsync(wallet.publicKey.toBase58()))
       return tx
     } catch (e) {
       return false
     }
-  }, [account, dispatch, lpContract, masterChef3Contract])
+  }, [wallet, dispatch, mintAddress, masterChef3Address])
 
   return { onApprove: handleApprove }
 }
 
-// Approve a Pool
-export const useSousApprove = (lpContract: Contract, sousId: number) => {
+// Approve a Pool's staking token for the SmartChef program
+export const useSousApprove = (mintAddress: string, sousId: number) => {
   const dispatch = useDispatch()
-  const { account }: { account: string } = useWallet()
-  const smartChefContract = useSmartChef(sousId)
+  const wallet = useWallet()
+  const smartChefProgram = useSmartChef(sousId)
 
   const handleApprove = useCallback(async () => {
     try {
-      const tx = await approve(lpContract, smartChefContract, account)
-      dispatch(updateUserAllowance(String(sousId), account))
+      const tx = await approve(
+        new PublicKey(mintAddress),
+        smartChefProgram?.programId,
+        wallet,
+      )
+      dispatch(updateUserAllowance(String(sousId), wallet.publicKey.toBase58()))
       return tx
     } catch (e) {
       return false
     }
-  }, [account, dispatch, lpContract, smartChefContract, sousId])
+  }, [wallet, dispatch, mintAddress, smartChefProgram, sousId])
 
   return { onApprove: handleApprove }
 }
 
-// Approve the lottery
+// Approve DBALL for the lottery program
 export const useLotteryApprove = () => {
-  const { account }: { account: string } = useWallet()
-  const cakeContract = useCake()
-  const lotteryContract = useLottery()
+  const wallet = useWallet()
+  const cakeMint = useCake()
+  const lotteryProgram = useLottery()
 
   const handleApprove = useCallback(async () => {
     try {
-      const tx = await approve(cakeContract, lotteryContract, account)
+      const tx = await approve(
+        new PublicKey(cakeMint),
+        lotteryProgram?.programId,
+        wallet,
+      )
       return tx
     } catch (e) {
       return false
     }
-  }, [account, cakeContract, lotteryContract])
+  }, [wallet, cakeMint, lotteryProgram])
 
   return { onApprove: handleApprove }
-}
-
-// Approve an IFO
-export const useIfoApprove = (tokenContract: Contract, spenderAddress: string) => {
-  const { account } = useWallet()
-  const onApprove = useCallback(async () => {
-    try {
-      const tx = await tokenContract.methods
-        .approve(spenderAddress, ethers.constants.MaxUint256)
-        .send({ from: account })
-      return tx
-    } catch {
-      return false
-    }
-  }, [account, spenderAddress, tokenContract])
-
-  return onApprove
 }

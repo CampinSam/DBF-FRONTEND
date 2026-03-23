@@ -1,76 +1,68 @@
 import BigNumber from 'bignumber.js'
-import erc20ABI from 'config/abi/erc20.json'
-import masterchef3ABI from 'config/abi/masterchef3.json'
-import multicall from 'utils/multicall'
+import { PublicKey } from '@solana/web3.js'
+import { getAssociatedTokenAddress, getAccount } from '@solana/spl-token'
+import { getConnection } from 'utils/solana'
 import farms3Config from 'config/constants/farms3'
 import { getMasterChef3Address } from 'utils/addressHelpers'
+import { getAllowance, getTokenBalance } from 'utils/erc20'
 
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
 export const fetchFarm3UserAllowances = async (account: string) => {
-  const masterChef3Adress = getMasterChef3Address()
+  const masterChef3Address = getMasterChef3Address()
 
-  const calls = farms3Config.map((farm) => {
-    const lpContractAddress = farm.isTokenOnly ? farm.tokenAddresses[CHAIN_ID] : farm.lpAddresses[CHAIN_ID]
-    return { address: lpContractAddress, name: 'allowance', params: [account, masterChef3Adress] }
-  })
-
-  const rawLpAllowances = await multicall(erc20ABI, calls)
-  const parsedLpAllowances = rawLpAllowances.map((lpBalance) => {
-    return new BigNumber(lpBalance).toJSON()
-  })
-  return parsedLpAllowances
+  const allowances = await Promise.all(
+    farms3Config.map(async (farm) => {
+      const mintAddress = farm.isTokenOnly
+        ? farm.tokenAddresses[CLUSTER]
+        : farm.lpAddresses[CLUSTER]
+      if (!mintAddress || !masterChef3Address) return '0'
+      const allowance = await getAllowance(mintAddress, account, masterChef3Address)
+      return new BigNumber(allowance).toJSON()
+    }),
+  )
+  return allowances
 }
 
 export const fetchFarm3UserTokenBalances = async (account: string) => {
-  const calls = farms3Config.map((farm) => {
-    const lpContractAddress = farm.isTokenOnly ? farm.tokenAddresses[CHAIN_ID] : farm.lpAddresses[CHAIN_ID]
-    return {
-      address: lpContractAddress,
-      name: 'balanceOf',
-      params: [account],
-    }
-  })
-
-  const rawTokenBalances = await multicall(erc20ABI, calls)
-  const parsedTokenBalances = rawTokenBalances.map((tokenBalance) => {
-    return new BigNumber(tokenBalance).toJSON()
-  })
-  return parsedTokenBalances
+  const balances = await Promise.all(
+    farms3Config.map(async (farm) => {
+      const mintAddress = farm.isTokenOnly
+        ? farm.tokenAddresses[CLUSTER]
+        : farm.lpAddresses[CLUSTER]
+      if (!mintAddress) return '0'
+      const balance = await getTokenBalance(mintAddress, account)
+      return new BigNumber(balance).toJSON()
+    }),
+  )
+  return balances
 }
 
 export const fetchFarm3UserStakedBalances = async (account: string) => {
-  const masterChef3Adress = getMasterChef3Address()
+  const connection = getConnection()
+  const masterChef3Pubkey = new PublicKey(getMasterChef3Address())
 
-  const calls = farms3Config.map((farm) => {
-    return {
-      address: masterChef3Adress,
-      name: 'userInfo',
-      params: [farm.pid, account],
-    }
-  })
-
-  const rawStakedBalances = await multicall(masterchef3ABI, calls)
-  const parsedStakedBalances = rawStakedBalances.map((stakedBalance) => {
-    return new BigNumber(stakedBalance[0]._hex).toJSON()
-  })
-  return parsedStakedBalances
+  const stakedBalances = await Promise.all(
+    farms3Config.map(async (farm) => {
+      const lpAddress = farm.isTokenOnly
+        ? farm.tokenAddresses[CLUSTER]
+        : farm.lpAddresses[CLUSTER]
+      if (!lpAddress) return '0'
+      try {
+        const lpMintPubkey = new PublicKey(lpAddress)
+        const userStakeAta = await getAssociatedTokenAddress(lpMintPubkey, masterChef3Pubkey, true)
+        const stakeAccount = await getAccount(connection, userStakeAta).catch(() => null)
+        return new BigNumber(stakeAccount?.amount?.toString() || '0').toJSON()
+      } catch (e) {
+        return '0'
+      }
+    }),
+  )
+  return stakedBalances
 }
 
 export const fetchFarm3UserEarnings = async (account: string) => {
-  const masterChef3Adress = getMasterChef3Address()
-
-  const calls = farms3Config.map((farm) => {
-    return {
-      address: masterChef3Adress,
-      name: 'pendingEgg',
-      params: [farm.pid, account],
-    }
-  })
-
-  const rawEarnings = await multicall(masterchef3ABI, calls)
-  const parsedEarnings = rawEarnings.map((earnings) => {
-    return new BigNumber(earnings).toJSON()
-  })
-  return parsedEarnings
+  // Pending SENZU rewards tracked in MasterChef3 program PDA accounts.
+  // Returns 0 until on-chain program is deployed.
+  return farms3Config.map(() => new BigNumber(0).toJSON())
 }

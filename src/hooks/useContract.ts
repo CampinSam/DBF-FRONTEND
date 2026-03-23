@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
-import { AbiItem } from 'web3-utils'
-import { ContractOptions } from 'web3-eth-contract'
-import useWeb3 from 'hooks/useWeb3'
+import { useEffect, useState, useMemo } from 'react'
+import { useConnection, useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
+import { AnchorProvider, Program, Idl } from '@coral-xyz/anchor'
 import {
   getMasterChefAddress,
   getMasterChef3Address,
@@ -11,94 +11,63 @@ import {
   getLotteryTicketAddress,
 } from 'utils/addressHelpers'
 import { poolsConfig } from 'config/constants'
-import { PoolCategory } from 'config/constants/types'
-import ifo from 'config/abi/ifo.json'
-import ido from 'config/abi/ido.json'
-import erc20 from 'config/abi/erc20.json'
-import rabbitmintingfarm from 'config/abi/rabbitmintingfarm.json'
-import pancakeRabbits from 'config/abi/pancakeRabbits.json'
-import lottery from 'config/abi/lottery.json'
-import lotteryTicket from 'config/abi/lotteryNft.json'
-import masterChef from 'config/abi/masterchef.json'
-import masterChef3 from 'config/abi/masterchef3.json'
-import sousChef from 'config/abi/sousChef.json'
-import smartChefBnb from 'config/abi/sousChefBnb.json'
+import masterChefIdl from 'config/abi/masterchef.json'
+import masterChef3Idl from 'config/abi/masterchef3.json'
+import sousChefIdl from 'config/abi/sousChef.json'
+import lotteryIdl from 'config/abi/lottery.json'
 
-const CHAIN_ID = process.env.REACT_APP_CHAIN_ID
+const CLUSTER = process.env.REACT_APP_SOLANA_CLUSTER || 'devnet'
 
-const useContract = (abi: AbiItem, address: string, contractOptions?: ContractOptions) => {
-  const web3 = useWeb3()
-  const [contract, setContract] = useState(new web3.eth.Contract(abi, address, contractOptions))
+/**
+ * Base hook: creates an Anchor Program instance for a given IDL and program ID
+ */
+const useProgram = (idl: Idl, programId: string): Program | null => {
+  const { connection } = useConnection()
+  const wallet = useWallet()
 
-  useEffect(() => {
-    setContract(new web3.eth.Contract(abi, address, contractOptions))
-  }, [abi, address, contractOptions, web3])
-
-  return contract
+  return useMemo(() => {
+    if (!wallet.publicKey) return null
+    const provider = new AnchorProvider(connection, wallet as any, { commitment: 'confirmed' })
+    return new Program(idl, new PublicKey(programId), provider)
+  }, [connection, wallet, idl, programId])
 }
 
 /**
- * Helper hooks to get specific contracts (by ABI)
+ * Helper hooks to get specific Anchor programs
  */
 
-export const useIfoContract = (address: string) => {
-  const ifoAbi = (ifo as unknown) as AbiItem
-  return useContract(ifoAbi, address)
+export const useMasterchef = (): Program | null => {
+  return useProgram(masterChefIdl as unknown as Idl, getMasterChefAddress())
 }
 
-export const useIdoContract = (address: string) => {
-  const idoAbi = (ido as unknown) as AbiItem
-  return useContract(idoAbi, address)
+export const useMasterchef3 = (): Program | null => {
+  return useProgram(masterChef3Idl as unknown as Idl, getMasterChef3Address())
 }
 
-export const useERC20 = (address: string) => {
-  const erc20Abi = (erc20 as unknown) as AbiItem
-  return useContract(erc20Abi, address)
+export const useSmartChef = (sousId: number): Program | null => {
+  const config = poolsConfig.find((pool) => pool.sousId === sousId)
+  const programId = config?.contractAddress[CLUSTER]
+  return useProgram(sousChefIdl as unknown as Idl, programId || '')
+}
+
+export const useLottery = (): Program | null => {
+  return useProgram(lotteryIdl as unknown as Idl, getLotteryAddress())
+}
+
+export const useLotteryTicket = (): Program | null => {
+  return useProgram(lotteryIdl as unknown as Idl, getLotteryTicketAddress())
+}
+
+export const useIdoContract = (address: string): string => {
+  return address
 }
 
 export const useCake = () => {
-  return useERC20(getCakeAddress())
+  return getCakeAddress()
 }
 
 export const useCake3 = () => {
-  return useERC20(getCake3Address())
+  return getCake3Address()
 }
 
-export const useRabbitMintingFarm = (address: string) => {
-  const rabbitMintingFarmAbi = (rabbitmintingfarm as unknown) as AbiItem
-  return useContract(rabbitMintingFarmAbi, address)
-}
-
-export const usePancakeRabbits = (address: string) => {
-  const pancakeRabbitsAbi = (pancakeRabbits as unknown) as AbiItem
-  return useContract(pancakeRabbitsAbi, address)
-}
-
-export const useLottery = () => {
-  const abi = (lottery as unknown) as AbiItem
-  return useContract(abi, getLotteryAddress())
-}
-
-export const useLotteryTicket = () => {
-  const abi = (lotteryTicket as unknown) as AbiItem
-  return useContract(abi, getLotteryTicketAddress())
-}
-
-export const useMasterchef = () => {
-  const abi = (masterChef as unknown) as AbiItem
-  return useContract(abi, getMasterChefAddress())
-}
-
-export const useMasterchef3 = () => {
-  const abi = (masterChef3 as unknown) as AbiItem
-  return useContract(abi, getMasterChef3Address())
-}
-
-export const useSmartChef = (id: number) => {
-  const config = poolsConfig.find((pool) => pool.sousId === id)
-  const rawAbi = config.poolCategory === PoolCategory.BINANCE ? smartChefBnb : sousChef
-  const abi = (rawAbi as unknown) as AbiItem
-  return useContract(abi, config.contractAddress[CHAIN_ID])
-}
-
-export default useContract
+export default useProgram
