@@ -37,21 +37,29 @@ const useProgram = (idl: Idl, programId: string): Program | null => {
  */
 
 export const useMasterchef = (): Program | null => {
-  return useProgram(masterChefIdl as Idl, getMasterChefAddress())
+  return useProgram(masterChefIdl as unknown as Idl, getMasterChefAddress())
 }
 
 export const useMasterchef3 = (): Program | null => {
-  return useProgram(masterChef3Idl as Idl, getMasterChef3Address())
+  return useProgram(masterChef3Idl as unknown as Idl, getMasterChef3Address())
 }
 
 export const useSmartChef = (sousId: number): Program | null => {
   const config = poolsConfig.find((pool) => pool.sousId === sousId)
   const programId = config?.contractAddress[CLUSTER]
-  return useProgram(sousChefIdl as Idl, programId || '')
+  return useProgram(sousChefIdl as unknown as Idl, programId || '')
 }
 
 export const useLottery = (): Program | null => {
-  return useProgram(lotteryIdl as Idl, getLotteryAddress())
+  return useProgram(lotteryIdl as unknown as Idl, getLotteryAddress())
+}
+
+export const useLotteryTicket = (): Program | null => {
+  return useProgram(lotteryIdl as unknown as Idl, getLotteryTicketAddress())
+}
+
+export const useIdoContract = (address: string): string => {
+  return address
 }
 
 export const useCake = () => {

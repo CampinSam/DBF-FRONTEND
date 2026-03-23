@@ -83,11 +83,10 @@ interface FarmCardProps {
   removed: boolean
   cakePrice?: BigNumber
   bnbPrice?: BigNumber
-  ethereum?: provider
   account?: string
 }
 
-const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice, ethereum, account }) => {
+const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice, account }) => {
   const TranslateString = useI18n()
 
   const [showExpandableSection, setShowExpandableSection] = useState(false)
@@ -165,7 +164,7 @@ const FarmCard: React.FC<FarmCardProps> = ({ farm, removed, cakePrice, bnbPrice,
         <Text style={{ fontSize: '24px' }}>{TranslateString(10001, 'Deposit Fee')}:</Text>
         <Text bold style={{ fontSize: '24px' }}>{(farm.depositFeeBP / 100)}%</Text>
       </Flex>
-      <CardActionsContainer farm={farm} ethereum={ethereum} account={account} />
+      <CardActionsContainer farm={farm} account={account} />
       <Divider />
       <ExpandableSectionButton
         onClick={() => setShowExpandableSection(!showExpandableSection)}

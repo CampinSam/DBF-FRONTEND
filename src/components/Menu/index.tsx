@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
 import { Menu as UikitMenu } from 'dragonball-uikit'
-import { useWallet, useWalletModal } from '@solana/wallet-adapter-react-ui'
+import { useWalletModal } from '@solana/wallet-adapter-react-ui'
 import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react'
 import { allLanguages } from 'config/localisation/languageCodes'
 import { LanguageContext } from 'contexts/Localisation/languageContext'
